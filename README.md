@@ -5,7 +5,7 @@ The backend code for creating and handling a chess game are self-made.
 
 ## Compile method
 By running the following command in cmd, you can compile the code into a working executable: <br />
-g++ gui.cpp -lgdi32 -municode -o gui.exe
+### g++ gui.cpp -lgdi32 -municode -O2 -o gui.exe
 
 
 ## Compatibility
@@ -17,6 +17,15 @@ CPU: intel i7-1165g7 <br />
 code version: C++17. <br />
 compiler: gcc 12.2.0. <br /> <br />
 
-NOTE: because the code uses the windows.h header, it is not compatible with Macos or Linux.
+NOTE: because the code uses the windows.h header, it is not compatible with Macos or Linux. <br />
+
+
+## benchmark
+fps: 3000 - 5500  (depends on how many objects are drawn on screen) <br />
+cpu load: 11% - 12% <br />
+
+NOTE: currently there is no fps cap, so the program will use one cpu core at 100%. In future updates there will be a fps cap added.
+
+
 
 

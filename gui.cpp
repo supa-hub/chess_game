@@ -67,7 +67,8 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
         case WM_TIMER: {
             case IDT_TIMER1: {
-                std::cout << "count: " << count << "\n";
+                // we use the below std::cout for displaying the total frames of the last 10 seconds
+                //std::cout << "count: " << count/10 << "\n";
                 count = 0;
                 return 0;
             }
@@ -181,7 +182,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     // we create a timer to calculate framerate
     SetTimer(window,             // handle to main window 
             IDT_TIMER1,          // timer identifier 
-            1000,                // 1-second interval 
+            10000,                // 1-second interval 
             (TIMERPROC) NULL);
 
 
