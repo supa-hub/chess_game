@@ -6,6 +6,7 @@
 #include <iostream>
 #include <stdint.h>
 #include <algorithm>
+#include <deque>
 
 static bool running = true;
 
@@ -17,7 +18,19 @@ struct renderState {
     BITMAPINFO bitmap_info;
 };
 
+struct textField {
+    int32_t height = 550;
+    int32_t width = 300;
+
+    std::deque<std::string> text = {"aamuja\n", "moro\n", "test\n"};  // we use deque for more efficient value storing compared to std::vector.
+
+    std::deque<HWND> boxes; // will store all the created text windows that are created and will delete the old ones.
+};
+
+
+
 renderState render_state;
+textField text_field;
 
 HBITMAP hBitmap = NULL;
 
@@ -27,7 +40,7 @@ HBITMAP hBitmap = NULL;
 #include "board.hpp"
 #include "game.hpp"
 
-
+std::shared_ptr<Board> board_ptr;
 
 #define process_button(b, vk)\
 case vk: {\
@@ -72,12 +85,13 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                 count = 0;
                 return 0;
             }
+
         } break;
 
         case WM_SIZE: {
             RECT rect;
             GetClientRect(hwnd, &rect);
-            render_state.width = rect.right - rect.left;
+            render_state.width = rect.right - rect.left - text_field.width;
             render_state.height = rect.bottom - rect.top;
 
             int size = render_state.width * render_state.height * sizeof(unsigned int);
@@ -93,7 +107,14 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             render_state.bitmap_info.bmiHeader.biBitCount = 32;
             render_state.bitmap_info.bmiHeader.biCompression = BI_RGB;
 
+
+            text_field.height = render_state.height;
+
+            draw_chessboard(render_state.width, render_state.height);
+            draw_pieces(board_ptr);
         } break;
+
+
 
     
 
@@ -110,7 +131,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 {
     Game game_object;
     
-    std::shared_ptr<Board> board_ptr = game_object.new_game().lock();
+    board_ptr = game_object.new_game().lock();
     board_ptr->add_pieces();
 
     std::weak_ptr<Square> a_square = std::weak_ptr<Square>();
@@ -153,7 +174,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         WS_OVERLAPPEDWINDOW | WS_VISIBLE,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
-        600,
+        600 + text_field.width,
         600,
         0,
         0,
@@ -182,13 +203,16 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     // we create a timer to calculate framerate
     SetTimer(window,             // handle to main window 
             IDT_TIMER1,          // timer identifier 
-            10000,                // 1-second interval 
+            10000,                // 10-second interval 
             (TIMERPROC) NULL);
 
+    
 
     draw_chessboard(render_state.width, render_state.height);
 
     draw_pieces(board_ptr);
+
+    display_all_text(600, 0, window);
 
 
     while (running) {
@@ -214,6 +238,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             &render_state.bitmap_info, 
             DIB_RGB_COLORS, 
             SRCCOPY);
+        
 
         
         
@@ -246,7 +271,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                             break;
 
                         
-
                     }
 
                     input.buttons[button_state].is_down = is_down; 
@@ -292,7 +316,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
                                 if ( move_vec  == a_move ) {
                                     std::cout << clicked_square.lock()->get_piece().lock()->tell_name() << "\n";
+                                    text_field.text.push_back( clicked_square.lock()->get_piece().lock()->tell_color() + " " + clicked_square.lock()->get_piece().lock()->tell_name() + "\n" );
+
                                     board_ptr->move_piece(clicked_square, a_square);
+
+                                    display_all_text(600, 0, window);
+
+                                    
                                     /*
                                     draw_chessboard(render_state.width, render_state.height);
                                     drawRedSquare(mouse_click.x, mouse_click.y);

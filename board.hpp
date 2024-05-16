@@ -42,6 +42,12 @@ class Board
             this->create_board();
         }
 
+        // for custom size board
+        Board(int32_t size) : all_squares(size, std::vector< std::shared_ptr<Square>>(size) )
+        {
+            this->create_board();
+        }
+
 
         // we add all the pieces onto the board
         void add_pieces()

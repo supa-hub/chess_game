@@ -2,11 +2,11 @@
 #include <stdint.h>
 #include <memory>
 #include <vector>
-#include <unordered_map>
 #include "board.hpp"
 #include "square.hpp"
 #include "chess_piece.hpp"
 #include <iostream>
+#include "render_text.hpp"
 
 
 inline void render_backround()
@@ -162,6 +162,8 @@ inline void render_at_pos(const std::vector<uint32_t>& pixels0, int32_t x0, int3
                 //pixels++;
                 //continue;
             }
+
+
 
             if ( x < 0 || x > render_state.width ) {
                 pixels++;
