@@ -163,6 +163,10 @@ inline void render_at_pos(const std::vector<uint32_t>& pixels0, int32_t x0, int3
                 //continue;
             }
 
+            else if ( x + x0 + y*render_state.width >= render_state.width*render_state.height || x + y*render_state.width < 0) {
+                return;
+            }
+
             if ( x < 0 || x > render_state.width ) {
                 pixels++;
                 continue;
