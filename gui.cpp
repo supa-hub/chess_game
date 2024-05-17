@@ -22,7 +22,7 @@ struct textField {
     int32_t height = 550;
     int32_t width = 300;
 
-    std::deque<std::string> text = {"aamuja\n", "moro\n", "test\n"};  // we use deque for more efficient value storing compared to std::vector.
+    std::deque<std::string> text;  // we use deque for more efficient value storing compared to std::vector.
 
     std::deque<HWND> boxes; // will store all the created text windows that are created and will delete the old ones.
 };
@@ -82,7 +82,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         case WM_TIMER: {
             case IDT_TIMER1: {
                 // we use the below std::cout for displaying the total frames of the last 10 seconds
-                std::cout << "count: " << count/10 << "\n";
+                //std::cout << "count: " << count/10 << "\n";
                 count = 0;
                 return 0;
             }
@@ -212,7 +212,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             (TIMERPROC) NULL);
 
     
-
+    
     draw_chessboard(render_state.width, render_state.height);
 
     draw_pieces(board_ptr);
@@ -351,6 +351,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                     else if ( clicked_square.expired() ) clicked_square = a_square;
                     
 
+                    
                     drawRedSquare(mouse_click.x, mouse_click.y);
                     draw_chessboard(render_state.width, render_state.height);
                     

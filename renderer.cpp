@@ -151,8 +151,6 @@ inline void render_at_pos(const std::vector<uint32_t>& pixels0, int32_t x0, int3
     std::vector<uint32_t>::const_iterator pixels = pixels0.cbegin();
 
     
-    int32_t test_width = render_state.width;
-    int32_t test_height = render_state.height;
 
     for ( int64_t y = y0; y < height+y0; y++ ) {
         uint32_t* pixel = static_cast<uint32_t*>(render_state.memory) + x0 + y*render_state.width;

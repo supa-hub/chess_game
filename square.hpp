@@ -58,7 +58,7 @@ class Square
         }
 
         // add a piece into the square
-        sharedPiecePtr add_piece( std::shared_ptr<Piece> a_piece )
+        sharedPiecePtr add_piece( std::shared_ptr<Piece> a_piece ) noexcept
         {   
             /*
             if ( container.expired() ) {
@@ -91,7 +91,7 @@ class Square
 
         bool attacked() { return this->under_attack; }
         
-        void change_attacked_status(const bool& a) 
+        void change_attacked_status(const bool& a) noexcept
         { 
             this->under_attack = a; 
             
@@ -101,13 +101,13 @@ class Square
             }
         }
 
-        void change_attacked_status(const std::string& a) 
+        void change_attacked_status(const std::string& a) noexcept
         { 
             this->under_attack = true;
             colors_attacking.push_back(a); 
         }
 
-        inline bool has_piece()
+        inline bool has_piece() noexcept
         {
             // we call the bool() operator of std::shared_ptr
             return (this->container) ? true : false;

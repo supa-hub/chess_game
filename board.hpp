@@ -170,7 +170,7 @@ class Board
         
         // converts window coordinates into a squares coordinates, these coordinates can then be used
         // to get the corresponding square
-        coordinates convert_pos( const int& x, const int& y, const int64_t& screen_width, const int64_t& screen_height, bool use_clamp = true )
+        coordinates convert_pos( const int& x, const int& y, const int64_t& screen_width, const int64_t& screen_height, bool use_clamp = true ) noexcept
         {
             int square_width = screen_width/8;
             int square_height = screen_height/8;
@@ -277,7 +277,7 @@ class Board
 
         }
 
-        bool has_piece(coordinates a)
+        bool has_piece(coordinates a) noexcept
         {   
             if ( a.x >= 0 && a.x < 7 && a.y >= 0 && a.y < 7 ) {
                 return all_squares[a.x][a.y]->has_piece();
