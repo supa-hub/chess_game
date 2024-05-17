@@ -22,6 +22,12 @@ inline void display_text(std::string text, const int32_t& x, const int32_t& y, H
 
     textfield = CreateWindow(standard1.c_str(), text1.c_str(), WS_VISIBLE | WS_CHILD | WS_BORDER, x, y, text_field.width - 50, text_field.height, hwnd, NULL, NULL, NULL );
 
+    if ( text_field.boxes.size() ) {
+        // delete the old child window
+        DestroyWindow(text_field.boxes.front());
+        text_field.boxes.pop_front();
+    }
+
     text_field.boxes.push_back(textfield);
 }
 
@@ -30,9 +36,6 @@ inline void display_all_text(const int32_t& x, const int32_t& y, HWND hwnd)
 {
     std::string all_text = std::reduce(text_field.text.begin(), text_field.text.end(), std::string(""));
 
-    // delete the old child window
-    DestroyWindow(text_field.boxes.front());
-    text_field.boxes.pop_front();
 
     display_text(all_text, render_state.width + 20, 0, hwnd);
 }

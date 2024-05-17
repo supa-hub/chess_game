@@ -37,6 +37,7 @@ HBITMAP hBitmap = NULL;
 
 #include "platform_independent.cpp"
 #include "renderer.cpp"
+#include "render_text.hpp"
 #include "board.hpp"
 #include "game.hpp"
 
@@ -81,7 +82,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         case WM_TIMER: {
             case IDT_TIMER1: {
                 // we use the below std::cout for displaying the total frames of the last 10 seconds
-                //std::cout << "count: " << count/10 << "\n";
+                std::cout << "count: " << count/10 << "\n";
                 count = 0;
                 return 0;
             }
@@ -91,6 +92,8 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         case WM_SIZE: {
             RECT rect;
             GetClientRect(hwnd, &rect);
+
+            text_field.width = (rect.right - rect.left)/3;
             render_state.width = rect.right - rect.left - text_field.width;
             render_state.height = rect.bottom - rect.top;
 
@@ -107,11 +110,13 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             render_state.bitmap_info.bmiHeader.biBitCount = 32;
             render_state.bitmap_info.bmiHeader.biCompression = BI_RGB;
 
-
+            
             text_field.height = render_state.height;
 
+            
             draw_chessboard(render_state.width, render_state.height);
             draw_pieces(board_ptr);
+            display_all_text(600, 0, hwnd);
         } break;
 
 
