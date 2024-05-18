@@ -1,10 +1,10 @@
-#include "helper_tools.hpp"
+#include "backend/helper_tools.hpp"
 #include <stdint.h>
 #include <memory>
 #include <vector>
-#include "board.hpp"
-#include "square.hpp"
-#include "chess_piece.hpp"
+#include "backend/board.hpp"
+#include "backend/square.hpp"
+#include "backend/chess_piece.hpp"
 
 
 inline void render_at_pos1(std::unique_ptr<std::vector<uint32_t>> pixels, int32_t x0, int32_t y0, const int64_t& width, const int64_t& height)

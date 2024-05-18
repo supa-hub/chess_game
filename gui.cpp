@@ -29,8 +29,8 @@ struct textField {
 
 
 
-renderState render_state;
-textField text_field;
+static renderState render_state;
+static textField text_field;
 
 HBITMAP hBitmap = NULL;
 
@@ -38,8 +38,8 @@ HBITMAP hBitmap = NULL;
 #include "platform_independent.cpp"
 #include "renderer.cpp"
 #include "render_text.hpp"
-#include "board.hpp"
-#include "game.hpp"
+#include "backend/board.hpp"
+#include "backend/game.hpp"
 
 std::shared_ptr<Board> board_ptr;
 
@@ -82,7 +82,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         case WM_TIMER: {
             case IDT_TIMER1: {
                 // we use the below std::cout for displaying the total frames of the last 10 seconds
-                //std::cout << "count: " << count/10 << "\n";
+                std::cout << "count: " << count << "\n";
                 count = 0;
                 return 0;
             }
@@ -149,6 +149,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     coordinates move_vec; // well use this to check if the piece can move to a new location
     sharedPiecePtr clicked_piece;
 
+    std::vector<coordinates> can_go; // Stores the possible moves a piece can make.
+
     //HBITMAP hBmp = (HBITMAP)LoadImage(NULL, _T("C:\\Users\\bilcu\\Downloads\\chess_pieces2.bmp"), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_LOADFROMFILE);
     
     coordinates mouse_click;
@@ -208,7 +210,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     // we create a timer to calculate framerate
     SetTimer(window,             // handle to main window 
             IDT_TIMER1,          // timer identifier 
-            10000,                // 10-second interval 
+            1000,                // 10-second interval 
             (TIMERPROC) NULL);
 
     
@@ -311,17 +313,16 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                             // with this for loop we check if the square that we clicked on can be moved to by our piece,
                             // so basically if the square is in the possible moves.
                             clicked_piece = clicked_square.lock()->get_piece().lock();
-                            for (  const coordinates& a_move : board_ptr->find_possible_tiles_to_move_to(
-                                                                clicked_square.lock()->coordinates(),
-                                                                clicked_piece
-                                                                 ) ) {
+                            can_go = board_ptr->doesnt_get_in_check( clicked_piece, clicked_square.lock()->coordinates() );
+
+                            for (  const coordinates& a_move : can_go ) {
 
                                 // this is the difference between the clicked_square and a_square.
                                 move_vec =  board_ptr->convert_pos(mouse_click.x, mouse_click.y, render_state.width, render_state.height) - clicked_square.lock()->coordinates();
 
                                 if ( move_vec  == a_move ) {
-                                    std::cout << clicked_square.lock()->get_piece().lock()->tell_name() << "\n";
-                                    text_field.text.push_back( clicked_square.lock()->get_piece().lock()->tell_color() + " " + clicked_square.lock()->get_piece().lock()->tell_name() + "\n" );
+                                    std::cout << clicked_square.lock()->get_piece().lock()->tell_name() << "\n"; 
+                                    text_field.text.push_back( clicked_square.lock()->get_piece().lock()->tell_name() + clicked_square.lock()->coordinates().toChesstring() + "\n" );
 
                                     board_ptr->move_piece(clicked_square, a_square);
 
@@ -337,26 +338,44 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                                     piece_just_moved = true;
                                     break;
                                 }
+                                
                             }
 
-                            
                         }
-                        clicked_square = a_square;
-
                         
+                        if (!piece_just_moved) clicked_square = a_square; 
+                        piece_just_moved = false;
                         
                     }
-
-                    // this is basically for the first time we click.
-                    else if ( clicked_square.expired() ) clicked_square = a_square;
                     
 
+
+                    // this is basically for the first time we click.
+                    else if ( clicked_square.expired() ) { 
+                        clicked_square = a_square; 
+                    }
+
+                    if ( clicked_square.lock()->get_piece().expired() ) {
+                        can_go = std::vector<coordinates>{};
+                    }
+
+                    else {
+                        can_go = board_ptr->doesnt_get_in_check( clicked_square.lock()->get_piece(), clicked_square.lock()->coordinates() );
+                    }
+                    
                     
                     drawRedSquare(mouse_click.x, mouse_click.y);
                     draw_chessboard(render_state.width, render_state.height);
                     
 
                     draw_pieces(board_ptr);
+
+                    drawPossibleMoves1(
+                                    can_go, 
+                                    clicked_square.lock()->coordinates(), 
+                                    render_state.width, 
+                                    render_state.height
+                                );
 
                     
                 } break;
@@ -381,29 +400,24 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             /*
              We do this check so we only have to render the possible moves
              when we click a new piece, this makes our program more efficient
-             by only requiring us to render again when the player hsa done an action.
+             by only requiring us to render again when the player has done an action.
 
              Of course in a game with NPC characters this wouldnt work.
              */
             if ( !( old_clicked_square == clicked_square.lock()->coordinates() && clicked_square.lock()->coordinates() != a_square.lock()->coordinates() ) ) {
-                if ( clicked_square.lock()->has_piece()) {
+                if ( clicked_square.lock()->has_piece() ) {
                         
                         // If we just moved a piece as white, then don't keep showing the white pieces moves.
                         // We'll wait until we click a black piece.
                         if ( !piece_just_moved ) {
                             clicked_piece = clicked_square.lock()->get_piece().lock();
-                            std::vector<coordinates> can_go = board_ptr->find_possible_tiles_to_move_to(
-                                clicked_square.lock()->coordinates(),
-                                clicked_piece
-                            );
-                            
-                            
+                                /*
                                 drawPossibleMoves1(
                                     can_go, 
                                     clicked_square.lock()->coordinates(), 
                                     render_state.width, 
                                     render_state.height
-                                );
+                                );*/
    
                         }
 
@@ -413,6 +427,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             }
             
         }
+        
         
         
         

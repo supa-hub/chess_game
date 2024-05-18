@@ -1,8 +1,8 @@
 #include <string>
 #include <memory>
-#include "square.hpp"
-#include "chess_piece.hpp"
-#include "board.hpp"
+#include "backend/square.hpp"
+#include "backend/chess_piece.hpp"
+#include "backend/board.hpp"
 
 
 int wmain()

@@ -1,11 +1,11 @@
-#include "helper_tools.hpp"
+#include "backend/helper_tools.hpp"
 #include <stdint.h>
 #include <memory>
 #include <vector>
 #include <unordered_map>
-#include "board.hpp"
-#include "square.hpp"
-#include "chess_piece.hpp"
+#include "backend/board.hpp"
+#include "backend/square.hpp"
+#include "backend/chess_piece.hpp"
 #include <iostream>
 
 
