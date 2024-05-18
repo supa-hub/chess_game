@@ -23,6 +23,9 @@ class Piece
         int id = 0;
         int value = 0;
         int color_id = 0;
+        bool first_move = true; // this will help us check if its the first pawn move or rook move, 
+                                // because there are certain chess rules that require that info.
+
 
         int position; // will be changed into the square when its done.
 
@@ -40,6 +43,9 @@ class Piece
         int tell_color_id() { return this->color_id; }
         int tell_id() { return this->id; }
         int tell_value() { return this->value; }
+        bool has_moved() { return !this->first_move; }
+
+        void moved() { this->first_move = false; }
         
 
         Piece() : name("none"), color("none") { }

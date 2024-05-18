@@ -1,11 +1,11 @@
-#include "helper_tools.hpp"
+#include "backend/helper_tools.hpp"
 #include <stdint.h>
 #include <memory>
 #include <vector>
 #include <unordered_map>
-#include "board.hpp"
-#include "square.hpp"
-#include "chess_piece.hpp"
+#include "backend/board.hpp"
+#include "backend/square.hpp"
+#include "backend/chess_piece.hpp"
 #include <iostream>
 
 
@@ -152,13 +152,18 @@ inline void render_at_pos(const std::vector<uint32_t>& pixels0, int32_t x0, int3
 
     
 
-
     for ( int64_t y = y0; y < height+y0; y++ ) {
         uint32_t* pixel = static_cast<uint32_t*>(render_state.memory) + x0 + y*render_state.width;
         for ( int64_t x = 0; x < width; x++ ) {
             
             if ( x + y*render_state.width >= render_state.width*render_state.height || x + y*render_state.width < 0) {
-                break;
+                return;
+                //pixels++;
+                //continue;
+            }
+
+            else if ( x + x0 + y*render_state.width >= render_state.width*render_state.height || x + y*render_state.width < 0) {
+                return;
                 //pixels++;
                 //continue;
             }

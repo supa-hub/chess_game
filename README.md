@@ -21,7 +21,7 @@ NOTE: because the code uses the windows.h header, it is not compatible with Maco
 
 
 ## benchmark
-fps: 3000 - 5500  (depends on how many objects are drawn on screen) <br />
+fps: 1500 - 8000  (depends on how many objects are drawn and the size of the window) <br />
 cpu load: 11% - 12% <br />
 
 NOTE: currently there is no fps cap, so the program will use one cpu core at 100%. In future updates there will be a fps cap added.

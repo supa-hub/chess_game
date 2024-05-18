@@ -42,6 +42,12 @@ class Board
             this->create_board();
         }
 
+        // for custom size board
+        Board(int32_t size) : all_squares(size, std::vector< std::shared_ptr<Square>>(size) )
+        {
+            this->create_board();
+        }
+
 
         // we add all the pieces onto the board
         void add_pieces()
@@ -58,23 +64,23 @@ class Board
                     a_square->remove_piece();
 
 
-                    if ( j == 1 )  a_square->add_piece(std::make_shared<Pawn>("pawn", "white", WHITE));
-                    else if ( j == 6 ) a_square->add_piece(std::make_shared<Pawn>("pawn", "black", BLACK));
+                    if ( j == 1 )  a_square->add_piece(std::make_shared<Pawn>("P", "w", WHITE));
+                    else if ( j == 6 ) a_square->add_piece(std::make_shared<Pawn>("P", "b", BLACK));
 
-                    else if ( (i == 0 || i == 7 ) && j == 0 )  a_square->add_piece(std::make_shared<Rook>("rook", "white", WHITE));
-                    else if ( (i == 0 || i == 7 ) && j == 7 )  a_square->add_piece(std::make_shared<Rook>("rook", "black", BLACK));
+                    else if ( (i == 0 || i == 7 ) && j == 0 )  a_square->add_piece(std::make_shared<Rook>("R", "w", WHITE));
+                    else if ( (i == 0 || i == 7 ) && j == 7 )  a_square->add_piece(std::make_shared<Rook>("R", "b", BLACK));
 
-                    else if ( (i == 1 || i == 6 ) && j == 0 )  a_square->add_piece(std::make_shared<Knight>("knight", "white", WHITE));
-                    else if ( (i == 1 || i == 6 ) && j == 7 )  a_square->add_piece(std::make_shared<Knight>("knight", "black", BLACK));
+                    else if ( (i == 1 || i == 6 ) && j == 0 )  a_square->add_piece(std::make_shared<Knight>("K", "w", WHITE));
+                    else if ( (i == 1 || i == 6 ) && j == 7 )  a_square->add_piece(std::make_shared<Knight>("K", "bk", BLACK));
 
-                    else if ( (i == 2 || i == 5 ) && j == 0 )  a_square->add_piece(std::make_shared<Bishop>("bishop", "white", WHITE));
-                    else if ( (i == 2 || i == 5 ) && j == 7 )  a_square->add_piece(std::make_shared<Bishop>("bishop", "black", BLACK));
+                    else if ( (i == 2 || i == 5 ) && j == 0 )  a_square->add_piece(std::make_shared<Bishop>("B", "white", WHITE));
+                    else if ( (i == 2 || i == 5 ) && j == 7 )  a_square->add_piece(std::make_shared<Bishop>("B", "b", BLACK));
 
-                    else if ( i == 3 && j == 0 )  a_square->add_piece(std::make_shared<Queen>("queen", "white", WHITE));
-                    else if ( i == 3 && j == 7 )  a_square->add_piece(std::make_shared<Queen>("queen", "black", BLACK));
+                    else if ( i == 3 && j == 0 )  a_square->add_piece(std::make_shared<Queen>("Q", "w", WHITE));
+                    else if ( i == 3 && j == 7 )  a_square->add_piece(std::make_shared<Queen>("Q", "b", BLACK));
 
-                    else if ( i == 4 && j == 0 )  a_square->add_piece(std::make_shared<King>("king", "white", WHITE));
-                    else if ( i == 4 && j == 7 )  a_square->add_piece(std::make_shared<King>("king", "black", BLACK));
+                    else if ( i == 4 && j == 0 )  a_square->add_piece(std::make_shared<King>("K", "w", WHITE));
+                    else if ( i == 4 && j == 7 )  a_square->add_piece(std::make_shared<King>("K", "b", BLACK));
                 }
             }
 
@@ -164,7 +170,7 @@ class Board
         
         // converts window coordinates into a squares coordinates, these coordinates can then be used
         // to get the corresponding square
-        coordinates convert_pos( const int& x, const int& y, const int64_t& screen_width, const int64_t& screen_height, bool use_clamp = true )
+        coordinates convert_pos( const int& x, const int& y, const int64_t& screen_width, const int64_t& screen_height, bool use_clamp = true ) noexcept
         {
             int square_width = screen_width/8;
             int square_height = screen_height/8;
@@ -173,8 +179,8 @@ class Board
             int y1 = y/square_height;
 
             if ( use_clamp ) {
-                x1 = clamp(x1, 0, 7);
-                y1 = clamp(y1, 0, 7);
+                x1 = clamp<int32_t>(x1, 0, 7);
+                y1 = clamp<int32_t>(y1, 0, 7);
             }
 
 
@@ -217,14 +223,18 @@ class Board
                 return;
             }
 
+            orig.lock()->get_piece().lock()->moved();
             // in the same line we remove a chess piece from the old square and add it in the new one.
-            std::weak_ptr removed_piece = target.lock()->add_piece( orig.lock()->remove_piece() );
+            sharedPiecePtr removed_piece = target.lock()->add_piece( orig.lock()->remove_piece() );
 
-            if ( !(removed_piece.expired()) ) {
-                this->captured_pieces_white.push_back( (removed_piece.lock())->tell_name() );
+            if ( removed_piece ) {
+                this->captured_pieces_white.push_back( removed_piece->tell_name() );
             }
 
+
             update_attacked_squares();
+            
+            
 
             if ( is_check() ) { 
                     std::cout << "king is in check" << "\n"; 
@@ -239,7 +249,26 @@ class Board
             if ( ++this->player_turn == amount_of_players ) {
                 this->player_turn = WHITE;
             }
+
+            return;
         }
+
+
+
+        // we use this with Board::doesnt_get_in_check() instead of the normal move_piece()
+        // to prevent circular method calls
+        void base_move(std::weak_ptr<Square> orig, std::weak_ptr<Square> target)
+        {
+            if ( orig.expired() || target.expired() ) return;
+
+            target.lock()->add_piece( orig.lock()->remove_piece() );
+
+            update_attacked_squares();
+
+            return;
+        }
+
+
 
 
         // this method finds the kings on the board and returns its position
@@ -271,7 +300,7 @@ class Board
 
         }
 
-        bool has_piece(coordinates a)
+        bool has_piece(coordinates a) noexcept
         {   
             if ( a.x >= 0 && a.x < 7 && a.y >= 0 && a.y < 7 ) {
                 return all_squares[a.x][a.y]->has_piece();
@@ -292,6 +321,7 @@ class Board
             int32_t piece_id = a_piece->tell_id(); 
             std::string color = a_piece->tell_color();
             int32_t color_id = a_piece->tell_color_id();
+
 
             coordinates aux0 = current;
             coordinates aux;
@@ -367,6 +397,7 @@ class Board
                 
             }
 
+
             
             return can_go;
         }
@@ -386,7 +417,7 @@ class Board
             std::vector< coordinates > can_go;
 
             std::vector<coordinates> basic_moves = { coordinates{0, 1}, coordinates{0, 2} };
-
+            
 
             // we also manually check for the 2 pawn moves that are only possible if theres a piece of opposite color.
             std::vector<coordinates> attacking_moves = { coordinates{1, 1}, coordinates{-1, 1} };
@@ -395,6 +426,9 @@ class Board
                 basic_moves = { coordinates{0, -1}, coordinates{0, -2} };
                 attacking_moves = { coordinates{1, -1}, coordinates{-1, -1} };
             }
+
+
+            if ( a_piece->has_moved() ) basic_moves.pop_back();
 
             // we check for the normal pawn moves if they're possible.
             for ( coordinates& basic : basic_moves ) {
@@ -427,9 +461,7 @@ class Board
 
 
             return can_go;
-            
-
-            
+        
         }
 
 
@@ -499,6 +531,10 @@ class Board
         // these  methods will tell us if the king is in check.
         inline bool is_check();
         inline std::string is_checkmate();
+
+        inline bool is_check(std::string color_to_check);
+        inline std::vector<coordinates> end_check(std::string color_to_check, weakPiecePtr a_piece);
+        inline std::vector<coordinates> doesnt_get_in_check( weakPiecePtr a_piece, coordinates current);
  
 };
 
@@ -523,7 +559,6 @@ inline bool Board::is_check()
         // loop through the piece colors that attack the square
         for ( std::string a_color : get_square(*coords).lock()->attacking_colors() ) {
 
-            std::cout << "a color: " << a_color << "\n";
 
             // We check if the square that the king is on is attacked by an opposite color piece
             if ( a_color != get_square(*coords).lock()->get_piece().lock()->tell_color() )
@@ -536,7 +571,85 @@ inline bool Board::is_check()
     
 }
 
+/*
+ We check if a king of certain color is in check. 
+ We need this for example when white tries to move a pawn but the white king is in check.
+*/
+inline bool Board::is_check(std::string color_to_check)
+{   
 
+
+    std::vector< coordinate_ptr > king_coords = this->find_kings();
+    std::string king_color;
+
+    if ( king_coords.empty() ) {
+        return false;
+    }
+
+    /*
+     we check the coordinates where kings are located and check if 
+     a piece of different color attacks it.
+    */
+    for ( coordinate_ptr& coords : king_coords ) {
+        king_color = get_square(*coords).lock()->get_piece().lock()->tell_color();
+
+        if ( king_color != color_to_check ) { continue; }
+
+        // loop through the piece colors that attack the square
+        for ( std::string a_color : get_square(*coords).lock()->attacking_colors() ) {
+
+            std::cout << "a color: " << a_color << "\n";
+
+            // We check if the square that the king is on is attacked by an opposite color piece
+            if ( a_color != king_color )
+                return true;
+        }
+           
+    }
+
+    return false;
+    
+}
+
+
+// We'll use this method to look for moves that prevent the king from being in check
+// in this function we expect that the king is in check.
+inline std::vector<coordinates> Board::end_check(std::string color_to_check, weakPiecePtr a_piece)
+{   
+    std::vector< coordinate_ptr > king_coords = this->find_kings();
+
+    if ( a_piece.expired() ) return std::vector<coordinates>();
+
+    if ( king_coords.empty() ) {
+        return std::vector<coordinates>();
+    }
+    
+
+    std::string king_color;
+    coordinates king_coord{0, 0}; // when we kno our kings coords, we store them here.
+    const std::vector< coordinate_ptr >& piece_moves = a_piece.lock()->possible_moves();
+
+    
+    
+    /*
+     we check the coordinates where kings are located and check if 
+     a piece of different color attacks it.
+    */
+   
+    for ( coordinate_ptr& coords : king_coords ) {
+        king_color = get_square(*coords).lock()->get_piece().lock()->tell_color();
+
+        if ( king_color != color_to_check ) { continue; }
+
+        king_coord = *coords;
+
+
+           
+    }
+
+    return std::vector<coordinates>();
+    
+}
 
 
 // we check if the game ends because a king is in checkmate
@@ -575,6 +688,54 @@ inline std::string Board::is_checkmate()
 
 
     return "";
+}
+
+
+
+
+/*
+this method loops through the pieces moves and checks if the piece moves then 
+does the king get in check.
+This method only returns the moves that don't get the king in check.
+*/
+inline std::vector<coordinates> Board::doesnt_get_in_check(weakPiecePtr a_piece, coordinates current_pos)
+{   
+    
+    std::vector< coordinates > possible_moves;
+    std::vector< coordinates > filtered_moves; // these are the squares the the piece can move to.
+    sharedPiecePtr removed_piece;
+    if ( a_piece.expired() ) return possible_moves;
+
+    std::string color_to_check = a_piece.lock()->tell_color();
+    
+
+    //const std::vector< coordinate_ptr >& piece_moves = a_piece.lock()->possible_moves();
+
+    filtered_moves = find_possible_tiles_to_move_to(current_pos, a_piece.lock());
+
+    for ( const coordinates& vector : filtered_moves ) {
+        coordinates a_move = current_pos + vector;
+        removed_piece = get_square(a_move).lock()->get_piece().lock();
+        std::weak_ptr<Square> current_square = get_square(current_pos);
+        std::weak_ptr<Square> a_square = get_square(a_move);
+        base_move(get_square(current_pos), get_square(a_move));
+
+        //update_attacked_squares(); // we update the attacked squares to see if the king gets in check after that move.
+
+        // if the king is not in check anymore, then its a possible move.
+        if ( !is_check(color_to_check) &&  is_checkmate() == "" ) {
+            possible_moves.push_back(vector);
+        }
+
+        base_move(get_square(a_move), get_square(current_pos));
+
+        if (removed_piece) get_square(a_move).lock()->add_piece(removed_piece);
+
+
+    }
+
+    return possible_moves;
+    
 }
 
 

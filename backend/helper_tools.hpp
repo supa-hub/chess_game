@@ -6,6 +6,10 @@
 #include <memory>
 #include <vector>
 #include <cmath>
+#include <string>
+#include <array>
+
+static std::array<std::string, 8> chess_letters = {"a", "b", "c", "d", "e", "f", "g"};
 
 
 struct coordinates 
@@ -47,6 +51,17 @@ struct coordinates
         return { x*a, y*a };
     }
 
+    inline std::string toString()
+    {
+        return std::to_string(x) + " " + std::to_string(y);
+    }
+
+    inline std::string toChesstring()
+    {
+        // We get the letter for the x axis and we also clamp the value so we dont get segfault.
+        return chess_letters[std::clamp<int32_t>(x, 0, 7)] + std::to_string(y+1);
+    }   
+
     // increment is a method which only 
     // raises or lowers the value if its not 0.
     // If the value is < 0, it lowers it,
@@ -72,12 +87,16 @@ struct coordinates
 // we create a clamp function to only choose the value if its
 // in the accepted range
 template <typename T>
-inline T clamp(const T& value, const T& smallest, const T& largest) noexcept
+constexpr inline T clamp(const T& value, const T& smallest, const T& largest) noexcept
 {
     return std::min(largest, std::max(value, smallest));
 }
 
- 
+
+
+
+
+
 
 enum pieces
 {
@@ -99,7 +118,6 @@ enum color_id
     RED,
     GREEN,
     BLUE,
-
 
 
     COLOR_COUNT
