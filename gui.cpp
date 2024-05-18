@@ -63,7 +63,7 @@ case vk: {\
 
 
 extern const UINT_PTR IDT_TIMER1 = 0;
-long count = 0;
+static long count = 0;
 
 LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -82,7 +82,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         case WM_TIMER: {
             case IDT_TIMER1: {
                 // we use the below std::cout for displaying the total frames of the last 10 seconds
-                std::cout << "count: " << count << "\n";
+                //std::cout << "count: " << count << "\n";
                 count = 0;
                 return 0;
             }
@@ -177,7 +177,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     HWND window = CreateWindowEx(
         0,
         window_class.lpszClassName, 
-        L"test window",
+        L"chess",
         WS_OVERLAPPEDWINDOW | WS_VISIBLE,
         CW_USEDEFAULT,
         CW_USEDEFAULT,

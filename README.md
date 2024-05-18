@@ -1,7 +1,10 @@
 # Chess game
 
 A C++ program that runs a simple chess game by using Windows.h functions for rendering and getting user inputs. <br />
-The backend code for creating and handling a chess game are self-made.
+Documentation of different files will be released soon. <br /> <br />
+The backend code for creating and handling a chess game are self-made. <br />
+Most of the frontend code is self-made. <br />
+
 
 ## Compile method
 By running the following command in cmd, you can compile the code into a working executable: <br />
