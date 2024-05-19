@@ -456,7 +456,7 @@ inline void draw_pieces(std::weak_ptr<Board> board_ptr)
 
     int x1 = 0;
     int y1 = 0;
-    HANDLE* hImg_ptr = NULL;
+    //HANDLE* hImg_ptr = NULL;
     rendered_picture picture;
 
 

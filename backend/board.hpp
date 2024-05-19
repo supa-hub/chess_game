@@ -73,7 +73,7 @@ class Board
                     else if ( (i == 1 || i == 6 ) && j == 0 )  a_square->add_piece(std::make_shared<Knight>("K", "w", WHITE));
                     else if ( (i == 1 || i == 6 ) && j == 7 )  a_square->add_piece(std::make_shared<Knight>("K", "bk", BLACK));
 
-                    else if ( (i == 2 || i == 5 ) && j == 0 )  a_square->add_piece(std::make_shared<Bishop>("B", "white", WHITE));
+                    else if ( (i == 2 || i == 5 ) && j == 0 )  a_square->add_piece(std::make_shared<Bishop>("B", "w", WHITE));
                     else if ( (i == 2 || i == 5 ) && j == 7 )  a_square->add_piece(std::make_shared<Bishop>("B", "b", BLACK));
 
                     else if ( i == 3 && j == 0 )  a_square->add_piece(std::make_shared<Queen>("Q", "w", WHITE));
@@ -532,9 +532,15 @@ class Board
         inline bool is_check();
         inline std::string is_checkmate();
 
+        // The below 2 overloads are almost the same as the original methods but they
+        // look for check and ckeckmate for a specific color.
         inline bool is_check(std::string color_to_check);
-        inline std::vector<coordinates> end_check(std::string color_to_check, weakPiecePtr a_piece);
+        inline std::string is_checkmate(std::string color_to_check);
+
+        // This method will be the main way the code filters out the places the the piece cannot 
+        // go to at that moment.
         inline std::vector<coordinates> doesnt_get_in_check( weakPiecePtr a_piece, coordinates current);
+        
  
 };
 
@@ -552,7 +558,7 @@ inline bool Board::is_check()
     }
 
     /*
-     we check the coordinates where kings are located and check if 
+     We check the coordinates where kings are located and check if 
      a piece of different color attacks it.
     */
     for ( coordinate_ptr& coords : king_coords ) {
@@ -598,7 +604,7 @@ inline bool Board::is_check(std::string color_to_check)
         // loop through the piece colors that attack the square
         for ( std::string a_color : get_square(*coords).lock()->attacking_colors() ) {
 
-            std::cout << "a color: " << a_color << "\n";
+            //std::cout << "a color: " << a_color << "\n";
 
             // We check if the square that the king is on is attacked by an opposite color piece
             if ( a_color != king_color )
@@ -612,47 +618,10 @@ inline bool Board::is_check(std::string color_to_check)
 }
 
 
-// We'll use this method to look for moves that prevent the king from being in check
-// in this function we expect that the king is in check.
-inline std::vector<coordinates> Board::end_check(std::string color_to_check, weakPiecePtr a_piece)
-{   
-    std::vector< coordinate_ptr > king_coords = this->find_kings();
-
-    if ( a_piece.expired() ) return std::vector<coordinates>();
-
-    if ( king_coords.empty() ) {
-        return std::vector<coordinates>();
-    }
-    
-
-    std::string king_color;
-    coordinates king_coord{0, 0}; // when we kno our kings coords, we store them here.
-    const std::vector< coordinate_ptr >& piece_moves = a_piece.lock()->possible_moves();
-
-    
-    
-    /*
-     we check the coordinates where kings are located and check if 
-     a piece of different color attacks it.
-    */
-   
-    for ( coordinate_ptr& coords : king_coords ) {
-        king_color = get_square(*coords).lock()->get_piece().lock()->tell_color();
-
-        if ( king_color != color_to_check ) { continue; }
-
-        king_coord = *coords;
-
-
-           
-    }
-
-    return std::vector<coordinates>();
-    
-}
-
-
-// we check if the game ends because a king is in checkmate
+/*
+ We check if the game ends because a king is in checkmate.
+ This method returnd the color that checkmated the king, e.g the opponents color.
+*/
 inline std::string Board::is_checkmate()
 {
     std::vector< coordinate_ptr > king_coords = this->find_kings();
@@ -692,6 +661,50 @@ inline std::string Board::is_checkmate()
 
 
 
+// we check if the game ends because a king is in checkmate
+inline std::string Board::is_checkmate(std::string color_to_check)
+{
+    std::vector< coordinate_ptr > king_coords = this->find_kings();
+    std::string king_color;
+
+    if ( king_coords.empty()) {
+        return "";
+    }
+
+    for ( coordinate_ptr& coords : king_coords ) {
+        for ( std::string a_color : get_square(*coords).lock()->attacking_colors() ) {
+
+            sharedPiecePtr king = get_square(*coords).lock()->get_piece().lock();
+
+            king_color = king->tell_color();
+
+            if ( king_color != color_to_check ) { continue; }
+            
+            /*
+             in this if statement we check if the king is in check, and also
+             if theres nowhere the king can go. I both of these are true,
+             then the king is in checkmate.
+            */
+            if ( 
+                a_color != king->tell_color()  
+                &&  
+                find_possible_tiles_to_move_to( 
+                    *coords,
+                    king
+                ).empty()
+            ) {
+                return a_color;
+            }
+                
+        }
+           
+    }
+
+
+    return "";
+}
+
+
 
 /*
 this method loops through the pieces moves and checks if the piece moves then 
@@ -709,21 +722,18 @@ inline std::vector<coordinates> Board::doesnt_get_in_check(weakPiecePtr a_piece,
     std::string color_to_check = a_piece.lock()->tell_color();
     
 
-    //const std::vector< coordinate_ptr >& piece_moves = a_piece.lock()->possible_moves();
-
+    // filter out the places that the piece cannot go to
     filtered_moves = find_possible_tiles_to_move_to(current_pos, a_piece.lock());
 
     for ( const coordinates& vector : filtered_moves ) {
         coordinates a_move = current_pos + vector;
         removed_piece = get_square(a_move).lock()->get_piece().lock();
-        std::weak_ptr<Square> current_square = get_square(current_pos);
-        std::weak_ptr<Square> a_square = get_square(a_move);
+
         base_move(get_square(current_pos), get_square(a_move));
 
-        //update_attacked_squares(); // we update the attacked squares to see if the king gets in check after that move.
 
         // if the king is not in check anymore, then its a possible move.
-        if ( !is_check(color_to_check) &&  is_checkmate() == "" ) {
+        if ( !is_check(color_to_check) &&  is_checkmate(color_to_check) == "" ) {
             possible_moves.push_back(vector);
         }
 

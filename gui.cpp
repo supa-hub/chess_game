@@ -321,7 +321,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                                 move_vec =  board_ptr->convert_pos(mouse_click.x, mouse_click.y, render_state.width, render_state.height) - clicked_square.lock()->coordinates();
 
                                 if ( move_vec  == a_move ) {
-                                    std::cout << clicked_square.lock()->get_piece().lock()->tell_name() << "\n"; 
+                                    //std::cout << clicked_square.lock()->get_piece().lock()->tell_name() << "\n"; 
                                     text_field.text.push_back( clicked_square.lock()->get_piece().lock()->tell_name() + clicked_square.lock()->coordinates().toChesstring() + "\n" );
 
                                     board_ptr->move_piece(clicked_square, a_square);

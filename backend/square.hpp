@@ -12,7 +12,7 @@ typedef std::string aString;
 typedef std::weak_ptr<Piece> weakPiecePtr; 
 typedef std::shared_ptr<Piece> sharedPiecePtr; 
 
-class Piece;
+
 
 class Square 
 {
@@ -24,10 +24,10 @@ class Square
         std::vector< std::string > colors_attacking;
 
         sharedPiecePtr container = sharedPiecePtr();
-        // std::shared_ptr<Board> board;
 
 
     public:
+        // base constructor
         Square()
         {
             this->name = "none";
@@ -60,37 +60,25 @@ class Square
         // add a piece into the square
         sharedPiecePtr add_piece( std::shared_ptr<Piece> a_piece ) noexcept
         {   
-            /*
-            if ( container.expired() ) {
-                //  if the square is empty, we will return an empty pointer. The emptiness will be checked by the code that calls this method
-                container = a_piece;
-
-                return weakPiecePtr(); // we return an empty weak pointer, because the vector doesnt have any piece
-            }
-
-            else {
-                weakPiecePtr aux = container;
-                //aux = container;
-
-                container = a_piece;
-
-                return aux;
-            }  */
+            // we do a standard std::move to change ownership
             sharedPiecePtr aux = std::move(container);
-            //aux = container;
 
             container = a_piece;
 
             return aux; 
         }
 
+
         // we remove a piece from the square
         sharedPiecePtr remove_piece() { return std::move(this->container); }
 
+        // return the squares coordinates
         coordinates coordinates()  { return this->position; }
 
+        // basically check if there's a piece that can move to this square
         bool attacked() { return this->under_attack; }
         
+        // change the value of this->under_attack
         void change_attacked_status(const bool& a) noexcept
         { 
             this->under_attack = a; 
@@ -101,12 +89,14 @@ class Square
             }
         }
 
+
         void change_attacked_status(const std::string& a) noexcept
         { 
             this->under_attack = true;
             colors_attacking.push_back(a); 
         }
 
+        // returns true if this square contains a piece, and false if the square's empty
         inline bool has_piece() noexcept
         {
             // we call the bool() operator of std::shared_ptr
@@ -114,19 +104,21 @@ class Square
 
         }
 
-
+        // return a std::weak_ptr to the piece that this square contains
         weakPiecePtr get_piece()
         {
             weakPiecePtr aux = this->container;
             return aux;
         }
 
+        // returns a vector that has the color of the pieces that can currently move to the square
         std::vector< std::string > attacking_colors()
         {
             return colors_attacking;
         }
 
-
+        // check whether 2 given Squares have the same coordinates,
+        // if they have, then this operator considers them the same Square
         inline bool operator == ( Square a_square )
         {
             return { this->position.x == a_square.coordinates().x &&  this->position.y == a_square.coordinates().y };

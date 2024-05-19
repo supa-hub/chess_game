@@ -8,12 +8,13 @@
 #include <utility>
 
 
-
+// simplify type declarations
 typedef std::string aString;
 
 typedef std::unique_ptr<coordinates> coordinate_ptr;
 
 
+// the base class that we'll use to derive the other chess pieces.
 class Piece 
 {
     protected:
@@ -266,6 +267,8 @@ class Knight : public virtual Piece
         }
 };
 
+
+// for Queen, we inherit both Rook and Bishop to get both of their add_pieces() methods.
 class Queen : public Rook, public Bishop
 {
     public:
