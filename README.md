@@ -1,7 +1,7 @@
 # Chess game
 
 A C++ program that runs a simple chess game by using Windows.h functions for rendering and getting user inputs. <br />
-Documentation of different files will be released soon. <br /> <br />
+Documentation of different files will be released in the future. <br /> <br />
 The backend code for creating and handling a chess game are self-made. <br />
 Most of the frontend code is self-made. <br />
 
@@ -28,7 +28,6 @@ fps: 1500 - 8000  (depends on how many objects are drawn and the size of the win
 cpu load: 11% - 12% <br />
 
 NOTE: currently there is no fps cap, so the program will use one cpu core at 100%. In future updates there will be a fps cap added.
-
 
 
 

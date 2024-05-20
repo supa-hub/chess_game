@@ -11,13 +11,13 @@
 #include "square.hpp"
 #include "helper_tools.hpp"
 
-// type definitions for simpler declarations
+// simplify type declarations
 typedef std::string aString;
 typedef std::weak_ptr<Piece> weakPiecePtr; 
 typedef std::unique_ptr<coordinates> coordinate_ptr;
 
 
-
+// Base class that handles the semantics of a chessboard in the backend.
 class Board 
 {
     private:
@@ -28,8 +28,8 @@ class Board
         // we keep count of each players score
         int score1 = 0;
         int score2 = 0;
-        std::vector<aString> captured_pieces_white; // the pieces that white captured
-        std::vector<aString> captured_pieces_black; // the pieces that black captured
+        std::vector<aString> captured_pieces_white; // the pieces that white has captured
+        std::vector<aString> captured_pieces_black; // the pieces that black has captured
 
         // we will create a 8x8 board into this container
         std::vector< std::vector< std::shared_ptr<Square> >> all_squares;
@@ -255,8 +255,8 @@ class Board
 
 
 
-        // we use this with Board::doesnt_get_in_check() instead of the normal move_piece()
-        // to prevent circular method calls
+        // We use this with Board::doesnt_get_in_check() instead of the normal move_piece()
+        // to prevent circular method calls.
         void base_move(std::weak_ptr<Square> orig, std::weak_ptr<Square> target)
         {
             if ( orig.expired() || target.expired() ) return;
@@ -271,7 +271,7 @@ class Board
 
 
 
-        // this method finds the kings on the board and returns its position
+        // This method finds the kings on the board and returns their positions.
         std::vector<coordinate_ptr> find_kings()
         {
             std::weak_ptr<Square> a_square_ptr;
@@ -300,6 +300,10 @@ class Board
 
         }
 
+        /*
+         Checks whether the square of the given coordinates contains a chess piece.
+         The method returns true, if it contains a piece, and false if the square is empty.
+        */
         bool has_piece(coordinates a) noexcept
         {   
             if ( a.x >= 0 && a.x < 7 && a.y >= 0 && a.y < 7 ) {

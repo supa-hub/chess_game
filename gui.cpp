@@ -41,7 +41,7 @@ HBITMAP hBitmap = NULL;
 #include "backend/board.hpp"
 #include "backend/game.hpp"
 
-std::shared_ptr<Board> board_ptr;
+static std::shared_ptr<Board> board_ptr;
 
 #define process_button(b, vk)\
 case vk: {\
@@ -82,7 +82,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         case WM_TIMER: {
             case IDT_TIMER1: {
                 // we use the below std::cout for displaying the total frames of the last 10 seconds
-                //std::cout << "count: " << count << "\n";
+                //std::cout << "count: " << count/10 << "\n";
                 count = 0;
                 return 0;
             }
@@ -210,7 +210,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     // we create a timer to calculate framerate
     SetTimer(window,             // handle to main window 
             IDT_TIMER1,          // timer identifier 
-            1000,                // 10-second interval 
+            10000,                // 10-second interval 
             (TIMERPROC) NULL);
 
     
@@ -395,7 +395,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         //draw_rect(100, 100, 50, 0x00ff22);
         
         
-        if ( !(clicked_square.expired()) ) { 
+        // if ( !(clicked_square.expired()) ) { 
             
             /*
              We do this check so we only have to render the possible moves
@@ -404,6 +404,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
              Of course in a game with NPC characters this wouldnt work.
              */
+            /*
             if ( !( old_clicked_square == clicked_square.lock()->coordinates() && clicked_square.lock()->coordinates() != a_square.lock()->coordinates() ) ) {
                 if ( clicked_square.lock()->has_piece() ) {
                         
@@ -411,6 +412,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                         // We'll wait until we click a black piece.
                         if ( !piece_just_moved ) {
                             clicked_piece = clicked_square.lock()->get_piece().lock();
+            */
                                 /*
                                 drawPossibleMoves1(
                                     can_go, 
@@ -418,7 +420,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                                     render_state.width, 
                                     render_state.height
                                 );*/
-   
+            /*
                         }
 
                     }
@@ -427,12 +429,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             }
             
         }
+        */
         
         
         
         
         count++;
-        //std::cout << count << "\n";
             
     }
 

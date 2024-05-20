@@ -39,8 +39,15 @@ inline void draw_filled_circle(int x0, int y0, uint32_t color)
     y0 = clamp<int>(y0, 0, render_state.height);
 }
 
+/*
+the main function that writes into memory the color values of each pixel
+of the rectangle that is drawn onto the window.
 
+x0, y0: the starting position the rectangle.
+x1, y1: the end position of the rectangle.
 
+NOTE: it is  simpler to call the draw_rect() function which abstracts a lot of the calculations.
+*/
 inline void draw_filled_rect(int x0, int y0, int x1, int y1, uint32_t color)
 {
     
@@ -72,10 +79,10 @@ inline void draw_square(int& x, int& y, int& width, uint32_t color)
 
 }
 
-
+// this function draws a rectangle of the given dimensions onto the window
 inline void draw_rect(int& x, int& y, int& width, int& height, uint32_t color)
 {
-
+    
     int x0 = x - width;
     int x1 = x + width;
     int y0 = y - height;
@@ -90,7 +97,12 @@ inline void draw_rect(int& x, int& y, int& width, int& height, uint32_t color)
 static coordinates redSquare;
 
 
-// this function draws all the squares of the chessboard
+/*
+ this function draws all the squares of the chessboard
+
+ widht: the width of the chessboard
+ height: the height of the chessboard
+*/
 inline void draw_chessboard(int width, int height)
 {
     int square_width = width/8;
@@ -138,16 +150,26 @@ inline void draw_chessboard(int width, int height)
 }
 
 /*
- We use this function to render the given image onto the screen
+ We use this function to render a given image onto the screen.
  I removed this part from render_image() to simplify the code.
- DO not pass the iterator by reference since this changes the iterators value in the
- callers scope.
+
+ pixels0: the std::vector that contains our color values for each pixel of the image
+
+ x0, y0: the starting position of the image
+
+ width: the width of the image
+
+ height: the height of the image
+
+ NOTE: I recommend that you do NOT DIRECTLY use this function and use the render_image() function, which uses this function
+ but simplifies your job.
 */
 inline void render_at_pos(const std::vector<uint32_t>& pixels0, int32_t x0, int32_t y0, const int64_t& width, const int64_t& height)
 {
     //x0 = clamp<int>(x0, 0, render_state.width);
     //y0 = clamp<int>(y0, 0, render_state.height);
 
+    // the first pixel value of the array
     std::vector<uint32_t>::const_iterator pixels = pixels0.cbegin();
 
     

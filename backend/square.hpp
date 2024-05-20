@@ -14,6 +14,7 @@ typedef std::shared_ptr<Piece> sharedPiecePtr;
 
 
 
+// The Square-class represents one square of a chessboard in the backend.
 class Square 
 {
     private:
@@ -89,12 +90,13 @@ class Square
             }
         }
 
-
+        // add the color of the piece that can move to this square
         void change_attacked_status(const std::string& a) noexcept
         { 
             this->under_attack = true;
             colors_attacking.push_back(a); 
         }
+
 
         // returns true if this square contains a piece, and false if the square's empty
         inline bool has_piece() noexcept

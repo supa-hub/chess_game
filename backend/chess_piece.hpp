@@ -49,9 +49,10 @@ class Piece
         void moved() { this->first_move = false; }
         
 
+        // The base constructor of Piece.
         Piece() : name("none"), color("none") { }
 
-        // we construct a standard piece and give it its standard values
+        // We construct a standard piece and give it its standard values.
         Piece(aString name, aString color) : name(name), color(color) { }
 
         Piece(aString name, aString color, int color_id) : name(name), color(color) { }
@@ -63,17 +64,22 @@ class Piece
             this->id = this->id*(pow(10, color_id));
         }
 
-
+        // Returns all the moves that a piece can do.
         std::vector< coordinate_ptr > const& possible_moves() const { return this->moves; }
-        std::vector< coordinate_ptr > const& attack() const { return this->attacking_moves; }
 
+        /*
+        Returns the attacking moves of a piece. Generally these are the same as the normal moves,
+        But this is needed mor for Pawn, which have different attack moves than their usual moves.
+        */
+        std::vector< coordinate_ptr > const& attack() const { return this->attacking_moves; }
 
 };
 
 
 
 
-class Pawn : public virtual Piece 
+// The class for the pawn.
+class Pawn : public virtual Piece
 {
         
     public:
@@ -99,7 +105,7 @@ class Pawn : public virtual Piece
 
         inline void add_moves()
         {   
-            // We add all the pawns moves as pointers.
+            // We add all the pawn moves as pointers.
             // I use push_back() instead of adding the values in initialisation to support older C++ versions.
             if ( color_id == WHITE ) {
                 this->moves.push_back( std::make_unique<coordinates>(0, 2) );
@@ -131,7 +137,6 @@ class Rook : public virtual Piece
             this->value = 5;
 
             add_moves();
-
         }
 
 
