@@ -63,7 +63,7 @@ struct
     HANDLE knight = getImageData("knight1");
     HANDLE bishop = getImageData("bishop1");
     HANDLE rook = getImageData("rook");
-    HANDLE queen = getImageData("rook");
+    HANDLE queen = getImageData("queen");
     HANDLE king = getImageData("king");
     HANDLE pawn_bl = getImageData("pawn_bl");
     HANDLE knight_bl = getImageData("knight_bl");

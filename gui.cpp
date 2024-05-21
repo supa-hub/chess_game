@@ -304,7 +304,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 
                     /*
-                    we use these if-statements to click on chess pieces and move them around.
+                    We use these if-statements to click on chess pieces and move them around.
+
+                    We do this check so we only have to render the possible moves
+                    when we click a new piece, this makes our program more efficient
+                    by only requiring us to render again when the player has done an action.
                     */
                     if ( !(clicked_square.expired()) && !(a_square.expired()) ) {
                         if ( clicked_square.lock()->coordinates() != a_square.lock()->coordinates() && 
@@ -343,6 +347,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
                         }
                         
+                        // we do this check to only update the latest clicked square when we moved a piece.
                         if (!piece_just_moved) clicked_square = a_square; 
                         piece_just_moved = false;
                         
@@ -364,6 +369,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                     }
                     
                     
+                    // the next 4 functions draw different parts of the gui onto the window.
                     drawRedSquare(mouse_click.x, mouse_click.y);
                     draw_chessboard(render_state.width, render_state.height);
                     
@@ -390,48 +396,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         }
 
 
-        
         //render_backround();
         //draw_rect(100, 100, 50, 0x00ff22);
-        
-        
-        // if ( !(clicked_square.expired()) ) { 
-            
-            /*
-             We do this check so we only have to render the possible moves
-             when we click a new piece, this makes our program more efficient
-             by only requiring us to render again when the player has done an action.
-
-             Of course in a game with NPC characters this wouldnt work.
-             */
-            /*
-            if ( !( old_clicked_square == clicked_square.lock()->coordinates() && clicked_square.lock()->coordinates() != a_square.lock()->coordinates() ) ) {
-                if ( clicked_square.lock()->has_piece() ) {
-                        
-                        // If we just moved a piece as white, then don't keep showing the white pieces moves.
-                        // We'll wait until we click a black piece.
-                        if ( !piece_just_moved ) {
-                            clicked_piece = clicked_square.lock()->get_piece().lock();
-            */
-                                /*
-                                drawPossibleMoves1(
-                                    can_go, 
-                                    clicked_square.lock()->coordinates(), 
-                                    render_state.width, 
-                                    render_state.height
-                                );*/
-            /*
-                        }
-
-                    }
-                piece_just_moved = false;
-                old_clicked_square = clicked_square.lock()->coordinates();
-            }
-            
-        }
-        */
-        
-        
         
         
         count++;
