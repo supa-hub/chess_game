@@ -69,17 +69,6 @@ case vk: {\
 } break;
 
 
-/*
-// we create a macro to shorten the function call
-#define piece_possible_moves(square)  board_ptr->find_possible_tiles_to_move_to( \
-                    square.lock()->get_piece().lock()->possible_moves(), \
-                    square.lock()->coordinates(), \
-                    render_state.width, \
-                    render_state.height,\
-                    square.lock()->get_piece().lock()->tell_color()\
-                );
-*/
-
 
 extern const UINT_PTR IDT_TIMER1 = 0;
 static long count = 0;
@@ -170,7 +159,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     std::vector<coordinates> can_go; // Stores the possible moves a piece can make.
 
-    //HBITMAP hBmp = (HBITMAP)LoadImage(NULL, _T("C:\\Users\\bilcu\\Downloads\\chess_pieces2.bmp"), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_LOADFROMFILE);
     
     coordinates mouse_click;
 
@@ -414,10 +402,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             
         }
 
-
-        //render_backround();
-        //draw_rect(100, 100, 50, 0x00ff22);
-        
         
         count++;
             
