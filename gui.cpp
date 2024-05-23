@@ -1,5 +1,5 @@
 /* 
-Copyright (C) 2024  Tomi Bilcu
+Copyright (C) 2024  Tomi Bilcu a.k.a supa-hub
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
