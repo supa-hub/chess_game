@@ -71,7 +71,7 @@ class Board
                     else if ( (i == 0 || i == 7 ) && j == 7 )  a_square->add_piece(std::make_shared<Rook>("R", "b", BLACK));
 
                     else if ( (i == 1 || i == 6 ) && j == 0 )  a_square->add_piece(std::make_shared<Knight>("K", "w", WHITE));
-                    else if ( (i == 1 || i == 6 ) && j == 7 )  a_square->add_piece(std::make_shared<Knight>("K", "bk", BLACK));
+                    else if ( (i == 1 || i == 6 ) && j == 7 )  a_square->add_piece(std::make_shared<Knight>("K", "b", BLACK));
 
                     else if ( (i == 2 || i == 5 ) && j == 0 )  a_square->add_piece(std::make_shared<Bishop>("B", "w", WHITE));
                     else if ( (i == 2 || i == 5 ) && j == 7 )  a_square->add_piece(std::make_shared<Bishop>("B", "b", BLACK));
@@ -200,7 +200,7 @@ class Board
             int x = direction->x;
             int y = direction->y;
 
-            // in the same line we remove a chess piece from the old square and add it in the new one.
+            // in the same line we remove a chess piece from the old square and add it in the new one
             std::weak_ptr removed_piece = (this->all_squares)[x][y]->add_piece( (this->all_squares)[x][y]->remove_piece() );
 
             if ( !(removed_piece.expired()) ) {
@@ -214,13 +214,13 @@ class Board
                 }
         }
 
-
-        void move_piece( std::weak_ptr<Square> orig, std::weak_ptr<Square> target ) noexcept
+        // this method calls true, if the piece could be moved, and false if the piece couldn't be moved
+        bool move_piece( std::weak_ptr<Square> orig, std::weak_ptr<Square> target ) noexcept
         {
-            if ( orig.expired() || target.expired() ) return;
+            if ( orig.expired() || target.expired() ) return false;
 
             if ( this->player_turn != orig.lock()->get_piece().lock()->tell_color_id() ) {
-                return;
+                return false;
             }
 
             orig.lock()->get_piece().lock()->moved();
@@ -237,7 +237,7 @@ class Board
             
 
             if ( is_check() ) { 
-                    std::cout << "king is in check" << "\n"; 
+                    std::cout << "king is in check " << this->player_turn << "\n"; 
                 }
 
             if ( is_checkmate() != "" ) {
@@ -250,7 +250,7 @@ class Board
                 this->player_turn = WHITE;
             }
 
-            return;
+            return true;
         }
 
 

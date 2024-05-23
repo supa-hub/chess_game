@@ -33,7 +33,10 @@ inline void display_text(std::string text, const int32_t& x, const int32_t& y, H
 
 
 inline void display_all_text(const int32_t& x, const int32_t& y, HWND hwnd)
-{
+{   
+    // we delete old texts
+    if ( text_field.text.size > 40 ) { text_field.text.pop_front(); }
+
     std::string all_text = std::reduce(text_field.text.begin(), text_field.text.end(), std::string(""));
 
 

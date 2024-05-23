@@ -54,6 +54,7 @@ static textField text_field;
 HBITMAP hBitmap = NULL;
 
 
+// include local header and cpp files
 #include "platform_independent.cpp"
 #include "renderer.cpp"
 #include "render_text.hpp"
@@ -333,9 +334,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
                                 if ( move_vec  == a_move ) {
                                     //std::cout << clicked_square.lock()->get_piece().lock()->tell_name() << "\n"; 
-                                    text_field.text.push_back( clicked_square.lock()->get_piece().lock()->tell_name() + clicked_square.lock()->coordinates().toChesstring() + "\n" );
 
-                                    board_ptr->move_piece(clicked_square, a_square);
+                                    if ( board_ptr->move_piece(clicked_square, a_square) ) {
+                                        text_field.text.push_back( a_square.lock()->get_piece().lock()->tell_name() + a_square.lock()->coordinates().toChesstring() + "\n" );
+                                    }
 
                                     display_all_text(600, 0, window);
 
