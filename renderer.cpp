@@ -171,7 +171,6 @@ inline void render_at_pos(const std::vector<uint32_t>& pixels0, int32_t x0, int3
 
     // the first pixel value of the array
     std::vector<uint32_t>::const_iterator pixels = pixels0.cbegin();
-
     
 
     for ( int64_t y = y0; y < height+y0; y++ ) {
@@ -216,6 +215,7 @@ inline void render_at_pos(const std::vector<uint32_t>& pixels0, int32_t x0, int3
             
         }
     }
+
 }
 
 
@@ -351,8 +351,8 @@ inline rendered_picture render_image(HANDLE* image, bool invert = false)
 
     //uint32_t bytes[(image_width * image_height)] = {0};
 
-    std::vector<uint32_t> bytes(image_width * image_height);
-    //bytes.reserve(image_width * image_height);
+    std::vector<uint32_t> bytes;
+    bytes.resize(image_width * image_height);
 
     uint32_t count = 0;
 
@@ -371,7 +371,7 @@ inline rendered_picture render_image(HANDLE* image, bool invert = false)
     if ( image_data == NULL ) return picture;
 
 
-    if ( image_height == 73 && image_width == 73 ) {
+    if ( image_height == 74 && image_width == 71 ) {
         std::cout << bm.bmWidthBytes << "\n";
         std::cout << remainder_of_row << "\n";
     }
@@ -382,7 +382,20 @@ inline rendered_picture render_image(HANDLE* image, bool invert = false)
 
     // we use nested loops for easier debugging
     for ( int64_t y = 0; y < image_height; y++ ) {
-        for ( int64_t y1 = 0; y1 < image_width; y1++ ) {
+        for ( int64_t y1 = 0; y1 < image_width+remainder_of_row; y1++ ) {
+            /*
+             we skip over the padding bytes that are added into our image
+             if the image is not word aligned, meaning that our image width
+             is not divisible by 4.
+
+             in this if-statement, if were over the image width, this means that we 
+             have arrived to the padding bytes, and we increment the pointer to the byte value by 
+             how many padding bytes we have, so we jump over them.
+            */
+            if ( y1 > image_width-1 ) {
+                image_data += remainder_of_row;
+                break;
+           }
 
             for ( uint32_t j = 0; j < 3; j++ ) {
                 switch ( j ) {
@@ -402,19 +415,10 @@ inline rendered_picture render_image(HANDLE* image, bool invert = false)
             }
             rgb = 65536 * red + 256*green + blue;
             
-            /*
-            we need to do this if statement so we can correctly render every picture,
-            even if they're not word aligned.
-            First condition checks if the picture is word aligned.
-            Second one checks whether the row is one in which the api has added an extra pixel.
-            Third one check if we're skipping over the last pixel in the row.
-            */
-            if ( remainder_of_row && y % 3  < remainder_of_row && y1 == image_width-1  ) {
-                continue;
-            }
+
             // we invert the colours if the piece is black 
             if ( invert && rgb < 16000000) { rgb = 0xffffff - rgb; }
-
+            
             bytes[count] = rgb;
 
             //red = *image_data++;
@@ -430,6 +434,7 @@ inline rendered_picture render_image(HANDLE* image, bool invert = false)
 
     //image_width = clamp<uint32_t>(image_width, 0, additional_width);
     //image_height = clamp<uint32_t>(image_height, 0, additional_height);
+
 
     picture.width = image_width;
     picture.height = image_height;
@@ -461,6 +466,7 @@ struct
     rendered_picture Queen_bl = render_image(&pieces.queen_bl);
     rendered_picture King_bl = render_image(&pieces.king_bl);
     rendered_picture greenBall = render_image(&pieces.green_ball);
+    rendered_picture wKing_check = render_image(&pieces.wking_check);
 } rendered_images;
 
 
@@ -527,7 +533,11 @@ inline void draw_pieces(std::weak_ptr<Board> board_ptr)
 
                     case KING:
                         //hImg_ptr = &pieces.king;
-                        picture = rendered_images.King;
+
+                        // if the king is in check, then we draw a different picture, if its not in check, then 
+                        // we draw the normal king piece
+                        if ( board_ptr.lock()->is_check(a_piece.lock()->tell_color()) ) picture = rendered_images.wKing_check;
+                        else { picture = rendered_images.King; }
                         break;
 
                     case PAWN*10:

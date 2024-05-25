@@ -72,6 +72,7 @@ struct
     HANDLE queen_bl = getImageData("queen_bl");
     HANDLE king_bl = getImageData("king_bl");
     HANDLE green_ball = getImageData("green_ball");
+    HANDLE wking_check = getImageData("king_in_check_test");
 
 } pieces;
 
