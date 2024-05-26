@@ -6,6 +6,10 @@
 #include <iostream>
 #include <algorithm>
 #include <stdint.h>
+#include <random>
+#include <functional>
+#include <unordered_set>
+#include <chrono> 
 
 #include "chess_piece.hpp"
 #include "square.hpp"
@@ -14,6 +18,7 @@
 // simplify type declarations
 typedef std::string aString;
 typedef std::weak_ptr<Piece> weakPiecePtr; 
+typedef std::shared_ptr<Piece> sharedPiecePtr;
 typedef std::unique_ptr<coordinates> coordinate_ptr;
 
 
@@ -31,21 +36,27 @@ class Board
         std::vector<aString> captured_pieces_white; // the pieces that white has captured
         std::vector<aString> captured_pieces_black; // the pieces that black has captured
 
+        std::unordered_set<int32_t> already_used; // well use this for when we shuffle around pieces (it's a special gamemode)
+
         // we will create a 8x8 board into this container
         std::vector< std::vector< std::shared_ptr<Square> >> all_squares;
+
+        int32_t board_length = 0;
 
 
     public:
 
-        Board() : all_squares(8, std::vector< std::shared_ptr<Square>>(8) )
+        Board() : all_squares(8, std::vector< std::shared_ptr<Square>>(8) ), board_length(8)
         {
             this->create_board();
+            this->already_used.reserve(32);
         }
 
         // for custom size board
-        Board(int32_t size) : all_squares(size, std::vector< std::shared_ptr<Square>>(size) )
+        Board(int32_t size) : all_squares(size, std::vector< std::shared_ptr<Square>>(size) ), board_length(size)
         {
             this->create_board();
+            this->already_used.reserve(32);
         }
 
 
@@ -56,8 +67,8 @@ class Board
 
             std::shared_ptr<Square> a_square;
 
-            // add al the pieces in their places onto the board
-            // unfortunately can't use switch statement because I needboth the x and y coordinates
+            // add all the pieces in their places onto the board
+            // I dont use switch-statement to make the code clearer
             for ( int i = 0; i < 8; i++ ) {
                 for ( int j = 0; j < 8; j++ ) {
                     a_square = all_squares[i][j];
@@ -83,6 +94,120 @@ class Board
                     else if ( i == 4 && j == 7 )  a_square->add_piece(std::make_shared<King>("K", "b", BLACK));
                 }
             }
+
+
+            return;
+        }
+
+
+
+        // this method add the chess pieces into random starting positions, except the pawns.
+        void add_shuffled_pieces()
+        {
+            std::shared_ptr<Square> a_square;
+
+            // add all the pieces in their places onto the board
+            // I dont use switch-statement to make the code clearer
+            for ( int i = 0; i < 8; i++ ) {
+                for ( int j = 0; j < 8; j++ ) {
+                    a_square = all_squares[i][j];
+                    a_square->remove_piece();
+                }
+            }
+
+
+            // add all the pieces in their places onto the board
+            for ( int i = 0; i < 8; i++ ) {
+                a_square = all_squares[i][1];
+                a_square->remove_piece();
+                
+                a_square->add_piece(std::make_shared<Pawn>("P", "w", WHITE));
+            }
+
+
+            for ( int i = 0; i < 8; i++ ) {
+                a_square = all_squares[i][6];
+                a_square->remove_piece();
+                
+                a_square->add_piece(std::make_shared<Pawn>("P", "b", BLACK));
+            }
+
+
+
+            // add the white rooks
+            add_specific_piece(std::make_shared<Rook>("R", "w", WHITE), 2, {0, 0}, {board_length, 0});
+
+            // add the white knights
+            add_specific_piece(std::make_shared<Knight>("K", "w", WHITE), 2, {0, 0}, {board_length, 0});
+
+            // add the white bishops
+            add_specific_piece(std::make_shared<Bishop>("B", "w", WHITE), 2, {0, 0}, {board_length, 0});
+
+            // add the white queen
+            add_specific_piece(std::make_shared<Queen>("Q", "w", WHITE), 1, {0, 0}, {board_length, 0});
+
+            // add the white king
+            add_specific_piece(std::make_shared<King>("K", "w", WHITE), 1, {0, 0}, {board_length, 0});
+
+            already_used.clear();
+            already_used.reserve(16);
+
+            // add the black rooks
+            add_specific_piece(std::make_shared<Rook>("R", "b", BLACK), 2, {0, 7}, {board_length, 7});
+
+            // add the black knights
+            add_specific_piece(std::make_shared<Knight>("K", "b", BLACK), 2, {0, 7}, {board_length, 7});
+
+            // add the black bishops
+            add_specific_piece(std::make_shared<Bishop>("B", "b", BLACK), 2, {0, 7}, {board_length, 7});
+
+            // add the black queen
+            add_specific_piece(std::make_shared<Queen>("Q", "b", BLACK), 1, {0, 7}, {board_length, 7});
+
+            // add the black king
+            add_specific_piece(std::make_shared<King>("K", "b", BLACK), 1, {0, 7}, {board_length, 7});
+            
+            
+            return;
+        }
+
+
+        // to simplify the add_shuffled_pieces() method, I created a new method that add a specific piece, 
+        // otherwise I would manually have to do this to every piece
+        void add_specific_piece(sharedPiecePtr a_piece, const int32_t& amount, const coordinates& start_range, const coordinates& end_range)
+        {
+            int32_t i = 0;
+            int32_t chosen = 0;
+            std::shared_ptr<Square> a_square;
+
+            // we ensure that the given range is in the given range of the board
+            int32_t x0 = clamp<int32_t>(start_range.x, 0, board_length-1);
+            int32_t y0 = clamp<int32_t>(start_range.y, 0, board_length-1);
+            int32_t x1 = clamp<int32_t>(end_range.x, 0, board_length-1);
+            int32_t y1 = clamp<int32_t>(end_range.y, 0, board_length-1);
+
+            std::default_random_engine generator;
+            generator.seed(std::chrono::system_clock::now().time_since_epoch().count()); // give our generator a random seed
+            
+            std::uniform_int_distribution<int> distribution(x0,x1);
+
+            auto random_num = std::bind ( distribution, generator );  // bind the generator to the distribution object
+
+            
+
+            while ( i < amount ) {
+                std::cout << "joo " << a_piece->tell_name() << " " << already_used.size() << "\n";
+                chosen = random_num();
+                a_square = all_squares[chosen][y1]; // get square
+
+                // check that the chosen square is not already used by a different piece
+                if ( already_used.count(chosen) == 0 ) {
+                    a_square->add_piece(a_piece);
+                    already_used.insert(chosen);
+                    i++;
+                }   
+            }
+
 
 
             return;

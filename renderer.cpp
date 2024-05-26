@@ -370,11 +370,12 @@ inline rendered_picture render_image(HANDLE* image, bool invert = false)
 
     if ( image_data == NULL ) return picture;
 
-
+    /*
     if ( image_height == 74 && image_width == 71 ) {
         std::cout << bm.bmWidthBytes << "\n";
         std::cout << remainder_of_row << "\n";
     }
+    */
     
 
     // in this for loop we combine the bits that make up one byte and we add
@@ -382,20 +383,8 @@ inline rendered_picture render_image(HANDLE* image, bool invert = false)
 
     // we use nested loops for easier debugging
     for ( int64_t y = 0; y < image_height; y++ ) {
-        for ( int64_t y1 = 0; y1 < image_width+remainder_of_row; y1++ ) {
-            /*
-             we skip over the padding bytes that are added into our image
-             if the image is not word aligned, meaning that our image width
-             is not divisible by 4.
-
-             in this if-statement, if were over the image width, this means that we 
-             have arrived to the padding bytes, and we increment the pointer to the byte value by 
-             how many padding bytes we have, so we jump over them.
-            */
-            if ( y1 > image_width-1 ) {
-                image_data += remainder_of_row;
-                break;
-           }
+        for ( int64_t y1 = 0; y1 < image_width; y1++ ) {
+            
 
             for ( uint32_t j = 0; j < 3; j++ ) {
                 switch ( j ) {
@@ -426,10 +415,19 @@ inline rendered_picture render_image(HANDLE* image, bool invert = false)
             
 
         }
+
+        /*
+        Below we skip over the padding bytes that are added into our image
+        if the image is not word aligned, meaning that our image width
+        is not divisible by 4.
+
+        in this statement, we have arrived to the padding bytes (if there are any), 
+        and we increment the pointer to the byte value by how many padding bytes we have, 
+        so this way we jump over them.
+        */
+        image_data += remainder_of_row;
     }
     
-
-    //bytes[image_width * image_height-1] = 65536 * red + 256*green + blue;
 
 
     //image_width = clamp<uint32_t>(image_width, 0, additional_width);

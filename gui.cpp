@@ -146,7 +146,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     Game game_object;
     
     board_ptr = game_object.new_game().lock();
-    board_ptr->add_pieces();
+    board_ptr->add_shuffled_pieces();
 
     std::weak_ptr<Square> a_square = std::weak_ptr<Square>();
 

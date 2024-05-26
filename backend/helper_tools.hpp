@@ -14,12 +14,12 @@ static std::array<std::string, 8> chess_letters = {"a", "b", "c", "d", "e", "f",
 
 struct coordinates 
 {
-    int x = 0;
-    int y = 0;
+    int32_t x = 0;
+    int32_t y = 0;
     
     
     //add a constructor for std::make_unique. Modified parameter names for clarity
-    coordinates(int x1 = 0, int y1 = 0) noexcept : x(x1), y(y1) {}
+    coordinates(int32_t x1 = 0, int32_t y1 = 0) noexcept : x(x1), y(y1) {}
 
 
     coordinates(const coordinates& a) noexcept : x(a.x), y(a.y) {}
@@ -46,7 +46,7 @@ struct coordinates
     }
 
 
-    inline coordinates operator * (int a)
+    inline coordinates operator * (int32_t a)
     {
         return { x*a, y*a };
     }
