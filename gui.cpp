@@ -58,6 +58,7 @@ HBITMAP hBitmap = NULL;
 #include "platform_independent.cpp"
 #include "renderer.cpp"
 #include "render_text.hpp"
+#include "render_button.hpp"
 #include "backend/board.hpp"
 #include "backend/game.hpp"
 
@@ -73,6 +74,7 @@ case vk: {\
 
 extern const UINT_PTR IDT_TIMER1 = 0;
 static long count = 0;
+HWND button;
 
 LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -88,6 +90,12 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             running = false;
         } break;
 
+        case WM_CREATE: {
+            display_button("render_text", render_state.width + text_field.width, 0, hwnd);
+            break;
+        }
+
+        
         case WM_TIMER: {
             case IDT_TIMER1: {
                 // we use the below std::cout for displaying the total frames of the last 10 seconds
@@ -97,6 +105,15 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             }
 
         } break;
+
+
+        case WM_COMMAND:
+            switch ( LOWORD(wParam) ) {
+                case 1:
+                    std::cout << "joo" << "\n";
+                    break;
+            }
+            break;
 
         case WM_SIZE: {
             RECT rect;
@@ -122,7 +139,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             
             text_field.height = render_state.height;
 
-            
+            display_button("render_text", render_state.width + text_field.width, 0, hwnd);
             draw_chessboard(render_state.width, render_state.height);
             draw_pieces(board_ptr);
             display_all_text(600, 0, hwnd);
@@ -189,7 +206,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         WS_OVERLAPPEDWINDOW | WS_VISIBLE,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
-        600 + text_field.width,
+        600 + text_field.width + 100,
         600,
         0,
         0,

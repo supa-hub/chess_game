@@ -188,15 +188,14 @@ class Board
 
             std::default_random_engine generator;
             generator.seed(std::chrono::system_clock::now().time_since_epoch().count()); // give our generator a random seed
-            
+
             std::uniform_int_distribution<int> distribution(x0,x1);
 
-            auto random_num = std::bind ( distribution, generator );  // bind the generator to the distribution object
+            auto random_num = std::bind( distribution, generator );  // bind the generator to the distribution object
 
             
 
             while ( i < amount ) {
-                std::cout << "joo " << a_piece->tell_name() << " " << already_used.size() << "\n";
                 chosen = random_num();
                 a_square = all_squares[chosen][y1]; // get square
 
