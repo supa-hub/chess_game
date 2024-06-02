@@ -240,7 +240,8 @@ inline void render_image(HANDLE* image, const int32_t& x, const int32_t& y, bool
     LONG image_width = bm.bmWidth;
 
     //long long int size = render_state.width * render_state.height * sizeof(unsigned int);
-    // this array will store the image bytes.
+
+    // this variable tells how many bytes we will store.
     uint64_t length_of_bmBits = (image_width * image_height)*bits_per_pixel/8;
 
     //uint32_t bytes[(image_width * image_height)] = {0};
@@ -296,11 +297,6 @@ inline void render_image(HANDLE* image, const int32_t& x, const int32_t& y, bool
 
     }
 
-    uint32_t additional_width = render_state.width - x;
-    uint32_t additional_height = render_state.height - y;
-
-    //image_width = clamp<uint32_t>(image_width, 0, additional_width);
-    //image_height = clamp<uint32_t>(image_height, 0, additional_height);
 
 
     //std::vector<uint32_t>::iterator all_bytes = bytes.begin(); // we pass an iterator so we can go through each pixel easily.

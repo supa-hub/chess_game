@@ -1,3 +1,6 @@
+#ifndef RENDER_BUTTON
+#define RENDER_BUTTON
+
 #include "backend/helper_tools.hpp"
 #include <stdint.h>
 #include <tchar.h>
@@ -28,3 +31,6 @@ inline void display_button(std::string text, const int32_t& x, const int32_t& y,
                         hwnd, (HMENU) 1, NULL, NULL
                         );
 }
+
+
+#endif

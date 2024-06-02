@@ -1,3 +1,6 @@
+#ifndef RENDER_TEXT
+#define RENDER_TEXT
+
 #include "backend/helper_tools.hpp"
 #include <stdint.h>
 #include <tchar.h>
@@ -42,3 +45,5 @@ inline void display_all_text(const int32_t& x, const int32_t& y, HWND hwnd)
 
     display_text(all_text, render_state.width + 20, 0, hwnd);
 }
+
+#endif

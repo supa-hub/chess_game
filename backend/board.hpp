@@ -597,7 +597,7 @@ class Board
          this methods updates every squares variable that
          we will use in the is_check method to check whether the king is in check
         */
-        inline void update_attacked_squares()
+        void update_attacked_squares()
         {   
             Square a_square;
             coordinates aux;
@@ -657,17 +657,17 @@ class Board
 
 
         // these  methods will tell us if the king is in check.
-        inline bool is_check();
-        inline std::string is_checkmate();
+        bool is_check();
+        std::string is_checkmate();
 
         // The below 2 overloads are almost the same as the original methods but they
         // look for check and ckeckmate for a specific color.
-        inline bool is_check(std::string color_to_check);
-        inline std::string is_checkmate(std::string color_to_check);
+        bool is_check(std::string color_to_check);
+        std::string is_checkmate(std::string color_to_check);
 
         // This method will be the main way the code filters out the places the the piece cannot 
         // go to at that moment.
-        inline std::vector<coordinates> doesnt_get_in_check( weakPiecePtr a_piece, coordinates current);
+        std::vector<coordinates> doesnt_get_in_check( weakPiecePtr a_piece, coordinates current);
         
  
 };
@@ -675,7 +675,7 @@ class Board
 
 
 
-inline bool Board::is_check()
+bool Board::is_check()
 {   
 
 
@@ -709,7 +709,7 @@ inline bool Board::is_check()
  We check if a king of certain color is in check. 
  We need this for example when white tries to move a pawn but the white king is in check.
 */
-inline bool Board::is_check(std::string color_to_check)
+bool Board::is_check(std::string color_to_check)
 {   
 
 
@@ -748,9 +748,9 @@ inline bool Board::is_check(std::string color_to_check)
 
 /*
  We check if the game ends because a king is in checkmate.
- This method returnd the color that checkmated the king, e.g the opponents color.
+ This method returns the color that checkmated the king, e.g the opponents color.
 */
-inline std::string Board::is_checkmate()
+std::string Board::is_checkmate()
 {
     std::vector< coordinate_ptr > king_coords = this->find_kings();
 
@@ -790,7 +790,7 @@ inline std::string Board::is_checkmate()
 
 
 // we check if the game ends because a king is in checkmate
-inline std::string Board::is_checkmate(std::string color_to_check)
+std::string Board::is_checkmate(std::string color_to_check)
 {
     std::vector< coordinate_ptr > king_coords = this->find_kings();
     std::string king_color;
@@ -835,11 +835,11 @@ inline std::string Board::is_checkmate(std::string color_to_check)
 
 
 /*
-this method loops through the pieces moves and checks if the piece moves then 
-does the king get in check.
+this method loops through the pieces moves and checks if the king gets in check
+when the piece moves.
 This method only returns the moves that don't get the king in check.
 */
-inline std::vector<coordinates> Board::doesnt_get_in_check(weakPiecePtr a_piece, coordinates current_pos)
+std::vector<coordinates> Board::doesnt_get_in_check(weakPiecePtr a_piece, coordinates current_pos)
 {   
     
     std::vector< coordinates > possible_moves;

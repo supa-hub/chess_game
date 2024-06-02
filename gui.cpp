@@ -91,7 +91,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         } break;
 
         case WM_CREATE: {
-            display_button("render_text", render_state.width + text_field.width, 0, hwnd);
+            //display_button("render_text", render_state.width + text_field.width, 0, hwnd);
             break;
         }
 
