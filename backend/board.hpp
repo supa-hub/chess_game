@@ -53,7 +53,7 @@ class Board
         }
 
         // for custom size board
-        Board(int32_t size) : all_squares(size, std::vector< std::shared_ptr<Square>>(size) ), board_length(size)
+        Board(uint32_t size) : all_squares(size, std::vector< std::shared_ptr<Square>>(size) ), board_length(size)
         {
             this->create_board();
             this->already_used.reserve(32);
@@ -166,6 +166,9 @@ class Board
 
             // add the black king
             add_specific_piece(std::make_shared<King>("K", "b", BLACK), 1, {0, 7}, {board_length, 7});
+
+            already_used.clear();
+            already_used.reserve(16);
             
             
             return;
@@ -182,7 +185,7 @@ class Board
 
             // we ensure that the given range is in the given range of the board
             int32_t x0 = clamp<int32_t>(start_range.x, 0, board_length-1);
-            int32_t y0 = clamp<int32_t>(start_range.y, 0, board_length-1);
+            //int32_t y0 = clamp<int32_t>(start_range.y, 0, board_length-1);
             int32_t x1 = clamp<int32_t>(end_range.x, 0, board_length-1);
             int32_t y1 = clamp<int32_t>(end_range.y, 0, board_length-1);
 
@@ -456,8 +459,8 @@ class Board
             bool is_same_direction = false; // we'll use this to figure out if a piece is blocking the way.
             coordinates vector;
 
-            std::vector<coordinates> directions_cannot_go;
-            std::vector<coordinates> can_go;
+            std::vector< coordinates > directions_cannot_go;
+            std::vector< coordinates > can_go;
 
 
             if ( piece_id == PAWN*pow(10, color_id)) {
@@ -631,13 +634,35 @@ class Board
                     if ( a_piece->tell_id() == KING*pow(10, a_piece->tell_color_id()) ) {
                             continue;
                     }
+
+                    const std::string color = a_piece->tell_color();
+
+
+                    // because the pawn doesnt attack with all of its moves, we have to create a special case for it.
+                    if ( a_piece->tell_id() == PAWN*pow(10, a_piece->tell_color_id()) ) {
+                            const std::vector< coordinate_ptr >& moves = a_piece->attack();
+
+                            for ( const coordinate_ptr& move : moves ) {
+                                aux = a_square.coordinates();
+                                aux = aux + *move;
+
+                                // we have to clamp these into the acceptable range
+                                if ( aux.x >= 0 && aux.x <= 7 && aux.y >= 0 && aux.y <= 7 ) {
+                                    this->get_square(aux).lock()->change_attacked_status(color);
+                                }
+
+                            }
+
+                            continue;
+                    }
                     
+
                     // we remove the locations that the piece cannot move to.
                     const std::vector<coordinates>& moves = find_possible_tiles_to_move_to( 
                                                                 a_square.coordinates(),
                                                                 a_piece
                                                                 );
-                    const std::string color = a_piece->tell_color();
+                    
                     
                     
 

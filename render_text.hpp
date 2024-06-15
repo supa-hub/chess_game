@@ -5,11 +5,10 @@
 #include <stdint.h>
 #include <tchar.h>
 #include <memory>
-#include <vector>
-#include <iostream>
 #include <string>
 #include <windows.h>
 #include <numeric>
+#include <iostream>
 
 inline void display_text(std::string text, const int32_t& x, const int32_t& y, HWND hwnd)
 {   

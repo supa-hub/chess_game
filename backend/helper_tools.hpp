@@ -97,7 +97,6 @@ constexpr inline T clamp(const T& value, const T& smallest, const T& largest) no
 
 
 
-
 enum pieces
 {
     PAWN = 1,
@@ -145,37 +144,75 @@ inline coordinates square_to_pos(const coordinates& coords, const int32_t& scree
 }
 
 
-
 class RGB_t
-{
+{   
+    private:
+        /*
+         The following hex values we'll use in bitwise operations to modify the RGB values into a integer and vise-versa,
+         the compiler should replace calling these variables with just their values.
+
+         By making them static we use the same values for every RGB_t class, so we save alot of memory
+        */
+        static const uint32_t red_hex = 0xff0000;
+        static const uint32_t green_hex = 0x00ff00;
+        static const uint32_t blue_hex = 0x0000ff;
+        
+
     public:
         uint32_t red = 0;
         uint32_t green = 0;
         uint32_t blue = 0;
 
-        /*
-        RGB(uint32_t red1, uint32_t green1, uint32_t blue)
-        {
-            this->red = red1;
-            this->green = green1;
-            this->blue = blue1;
-        } */
 
 
-        inline uint64_t to_hex()
+        // define some constructors
+        constexpr RGB_t() noexcept { }
+
+        constexpr RGB_t(uint32_t red, uint32_t green, uint32_t blue) noexcept : red(red), green(green), blue(blue) { } 
+
+        constexpr RGB_t(uint32_t hex) noexcept
+        { 
+            this->red = ( hex & red_hex ) >> 16;
+            this->green = ( hex & green_hex ) >> 8;
+            this->blue = hex & blue_hex;
+        } 
+
+
+        inline uint32_t get_int() noexcept
         {
-            return 65536 * this->red + 256*this->green + this->blue;
+            return ( this->red << 16 ) | ( this->green << 8 ) | ( this->blue ) ;
         }
 
-        inline RGB_t operator + ( RGB_t color )
+        inline RGB_t operator + ( RGB_t color ) noexcept 
         {
-            return {this->red + color.red, this->green + color.green, this->blue + color.blue};
+            return { this->red + color.red, this->green + color.green, this->blue + color.blue };
         }
 
-        inline RGB_t operator - ( RGB_t color )
+        inline RGB_t operator - ( RGB_t color ) noexcept
         {
-            return {this->red - color.red, this->green - color.green, this->blue - color.blue};
+            return { this->red - color.red, this->green - color.green, this->blue - color.blue };
         }
+
+        inline RGB_t operator = ( uint32_t num ) noexcept
+        {
+            return { to_rgb(num) };
+        }
+
+
+        inline RGB_t to_rgb( uint32_t hex ) noexcept
+        {
+            return { ( hex & red_hex ) | ( hex & green_hex ) | ( hex & blue_hex ) };
+        }
+
+
+
+        template<typename T>
+        inline bool operator < ( T value )
+        {
+            return { get_int() < value };
+        }
+
+
 };
 
 

@@ -100,7 +100,7 @@ static coordinates redSquare;
 /*
  this function draws all the squares of the chessboard
 
- widht: the width of the chessboard
+ width: the width of the chessboard
  height: the height of the chessboard
 */
 inline void draw_chessboard(int width, int height)
@@ -166,8 +166,6 @@ inline void draw_chessboard(int width, int height)
 */
 inline void render_at_pos(const std::vector<uint32_t>& pixels0, int32_t x0, int32_t y0, const int64_t& width, const int64_t& height)
 {
-    //x0 = clamp<int>(x0, 0, render_state.width);
-    //y0 = clamp<int>(y0, 0, render_state.height);
 
     // the first pixel value of the array
     std::vector<uint32_t>::const_iterator pixels = pixels0.cbegin();
@@ -179,14 +177,10 @@ inline void render_at_pos(const std::vector<uint32_t>& pixels0, int32_t x0, int3
             
             if ( x + y*render_state.width >= render_state.width*render_state.height || x + y*render_state.width < 0) {
                 return;
-                //pixels++;
-                //continue;
             }
 
             else if ( x + x0 + y*render_state.width >= render_state.width*render_state.height || x + y*render_state.width < 0) {
                 return;
-                //pixels++;
-                //continue;
             }
 
             else if ( x + x0 + y*render_state.width >= render_state.width*render_state.height || x + y*render_state.width < 0) {
@@ -220,18 +214,17 @@ inline void render_at_pos(const std::vector<uint32_t>& pixels0, int32_t x0, int3
 
 
 // we use this function to render images onto the window.
-// some variables are not in use yet.
-inline void render_image(HANDLE* image, const int32_t& x, const int32_t& y, bool invert = false)
+inline void render_image(const HANDLE image, const int32_t& x, const int32_t& y, bool invert = false)
 {
     if ( image == NULL ) return;
 
     BITMAP bm; // a buffer containing the information of our image
-    GetObject(*image, sizeof(bm), (LPVOID)&bm);//get bitmap dimension
+    GetObject(image, sizeof(bm), (LPVOID)&bm);//get bitmap dimension
 
 
-    LONG bytesPerLine = bm.bmWidthBytes;
 
-    LONG bits_per_pixel = bm.bmBitsPixel; // indicates how many bits are required to tell one pixel
+    //LONG bits_per_pixel = bm.bmBitsPixel; // indicates how many bits are required to tell one pixel
+    WORD bytes_per_scan_line = bm.bmWidthBytes;
 
     //BYTE* image_data = (BYTE*)bm.bmBits;
     BYTE* image_data = static_cast<BYTE*>(bm.bmBits);
@@ -239,62 +232,68 @@ inline void render_image(HANDLE* image, const int32_t& x, const int32_t& y, bool
     LONG image_height = bm.bmHeight;
     LONG image_width = bm.bmWidth;
 
-    //long long int size = render_state.width * render_state.height * sizeof(unsigned int);
 
-    // this variable tells how many bytes we will store.
-    uint64_t length_of_bmBits = (image_width * image_height)*bits_per_pixel/8;
 
-    //uint32_t bytes[(image_width * image_height)] = {0};
+    // because of how the image scanning is done ( because of CPU architecture ),
+    // some rows have an additional pixel.
+    int64_t remainder_of_row = bytes_per_scan_line % image_width; 
 
     std::vector<uint32_t> bytes;
     bytes.reserve(image_width * image_height);
 
     uint32_t count = 0;
 
-    uint32_t rgb = 0;
-
-    /*
-     because of how i've made the switch statement, 
-     I get the values of the first pixel when I initialise the color variables
-    */
-    uint32_t red = *image_data++;
-    uint32_t green = *image_data++;
-    uint32_t blue = *image_data++;
-
+    RGB_t rgb{};
 
 
     if ( image_data == NULL ) return;
 
-    
 
-    // in this for loop we combine the bits that make up one byte and we add
-    // all of the bytes into one array
-    for ( uint64_t y1 = 0; y1 < length_of_bmBits; y1++ ) {
+    // we use nested loops for easier debugging
+    for ( int64_t y = 0; y < image_height; y++ ) {
+        for ( int64_t y1 = 0; y1 < image_width; y1++ ) {
+            
 
-        switch ( y1%(bits_per_pixel/8) ) {
-            case 0: {
-                rgb = 65536 * red + 256*green + blue;
+            for ( uint32_t j = 0; j < 3; j++ ) {
+                switch ( j ) {
+                    case 0: 
+                        rgb.red = *image_data++;
+                        break;
 
-                // we invert the colours if the piece is black 
-                if ( invert && rgb < 16000000) { rgb = 0xffffff - rgb; }
-                
-                bytes[count] = rgb;
+                    case 1: 
+                        rgb.green = *image_data++;
+                        break;
 
-                red = *image_data++;
-                count++;
+                    case 2: 
+                        rgb.blue = *image_data++;
+                        break;
 
-            } break;
+                    default:
+                        break;
+                }
 
-            case 1: 
-                green = *image_data++;
-                break;
+            }
 
-            case 2:
-                blue = *image_data++;
-                break;
+            //rgb = 65536 * red + 256*green + blue;
+
+
+            // we invert the colours if the piece is black 
+            if ( invert && rgb < 16000000u ) { rgb = 0xffffff - rgb.get_int(); }
+            
+            bytes[count++] = rgb.get_int();
+
         }
-        
 
+        /*
+        Below we skip over the padding bytes that are added into our image
+        if the image is not word aligned, meaning that our image width
+        is not divisible by 4.
+
+        in this statement, we have arrived to the padding bytes (if there are any), 
+        and we increment the pointer to the byte value by how many padding bytes we have, 
+        so this way we jump over them.
+        */
+        image_data += remainder_of_row;
     }
 
 
@@ -305,9 +304,7 @@ inline void render_image(HANDLE* image, const int32_t& x, const int32_t& y, bool
 
 
 
-// we use this function to render some frequently used pictures
-// and store them in memory
-// we return the iterator where the picture starts and the dimensions.
+
 struct rendered_picture
 {
     uint32_t width = 0;
@@ -316,18 +313,19 @@ struct rendered_picture
     std::vector<uint32_t> begin;
 };
 
-
-inline rendered_picture render_image(HANDLE* image, bool invert = false)
+// we use this function to render some frequently used pictures
+// and store them in memory
+inline rendered_picture render_image(HANDLE image, bool invert = false)
 {
     rendered_picture picture;
     if ( image == NULL ) return picture;
 
     BITMAP bm; // a buffer containing the information of our image
-    GetObject(*image, sizeof(bm), (LPVOID)&bm);//get bitmap dimension
+    GetObject(image, sizeof(bm), (LPVOID)&bm);//get bitmap dimension
     
 
 
-    LONG bits_per_pixel = bm.bmBitsPixel; // indicates how many bits are required to tell one pixel
+    ///LONG bits_per_pixel = bm.bmBitsPixel; // indicates how many bits are required to tell one pixel
     WORD bytes_per_scan_line = bm.bmWidthBytes;
 
     //BYTE* image_data = (BYTE*)bm.bmBits;
@@ -343,7 +341,7 @@ inline rendered_picture render_image(HANDLE* image, bool invert = false)
 
 
     // this array will store the image bytes.
-    uint64_t length_of_bmBits = (image_width * image_height)*bits_per_pixel/8;
+    //uint64_t length_of_bmBits = (image_width * image_height)*bits_per_pixel/8;
 
     //uint32_t bytes[(image_width * image_height)] = {0};
 
@@ -352,26 +350,11 @@ inline rendered_picture render_image(HANDLE* image, bool invert = false)
 
     uint32_t count = 0;
 
-    uint32_t rgb = 0;
+    RGB_t rgb{};
     
-    /*
-     because of how i've made the switch statement, 
-     I get the values of the first pixel when I initialise the color variables
-    */
-    uint32_t red = 0;
-    uint32_t green = 0;
-    uint32_t blue = 0;
-
 
 
     if ( image_data == NULL ) return picture;
-
-    /*
-    if ( image_height == 74 && image_width == 71 ) {
-        std::cout << bm.bmWidthBytes << "\n";
-        std::cout << remainder_of_row << "\n";
-    }
-    */
     
 
     // in this for loop we combine the bits that make up one byte and we add
@@ -385,29 +368,35 @@ inline rendered_picture render_image(HANDLE* image, bool invert = false)
             for ( uint32_t j = 0; j < 3; j++ ) {
                 switch ( j ) {
                     case 0: 
-                        red = *image_data++;
+                        rgb.red = *image_data++;
                         break;
 
                     case 1: 
-                        green = *image_data++;
+                        rgb.green = *image_data++;
                         break;
 
                     case 2: 
-                        blue = *image_data++;
+                        rgb.blue = *image_data++;
+                        break;
+
+                    default:
                         break;
                 }
 
             }
-            rgb = 65536 * red + 256*green + blue;
+
+            //rgb = 65536 * red + 256*green + blue;
+            
+
             
 
             // we invert the colours if the piece is black 
-            if ( invert && rgb < 16000000) { rgb = 0xffffff - rgb; }
+            if ( invert && rgb < 16000000u ) { rgb = 0xffffff - rgb.get_int(); }
             
-            bytes[count] = rgb;
+            bytes[count++] = rgb.get_int();
+
 
             //red = *image_data++;
-            count++;
             
 
         }
@@ -447,20 +436,20 @@ inline rendered_picture render_image(HANDLE* image, bool invert = false)
 */
 struct 
 {
-    rendered_picture Pawn = render_image(&pieces.pawn);
-    rendered_picture Bishop = render_image(&pieces.bishop);
-    rendered_picture Knight = render_image(&pieces.knight);
-    rendered_picture Rook = render_image(&pieces.rook);
-    rendered_picture Queen = render_image(&pieces.queen);
-    rendered_picture King = render_image(&pieces.king);
-    rendered_picture Pawn_bl = render_image(&pieces.pawn_bl);
-    rendered_picture Knight_bl = render_image(&pieces.knight_bl);
-    rendered_picture Bishop_bl = render_image(&pieces.bishop_bl);
-    rendered_picture Rook_bl = render_image(&pieces.rook_bl);
-    rendered_picture Queen_bl = render_image(&pieces.queen_bl);
-    rendered_picture King_bl = render_image(&pieces.king_bl);
-    rendered_picture greenBall = render_image(&pieces.green_ball);
-    rendered_picture wKing_check = render_image(&pieces.wking_check);
+    rendered_picture Pawn = render_image(pieces.pawn);
+    rendered_picture Bishop = render_image(pieces.bishop);
+    rendered_picture Knight = render_image(pieces.knight);
+    rendered_picture Rook = render_image(pieces.rook);
+    rendered_picture Queen = render_image(pieces.queen);
+    rendered_picture King = render_image(pieces.king);
+    rendered_picture Pawn_bl = render_image(pieces.pawn_bl);
+    rendered_picture Knight_bl = render_image(pieces.knight_bl);
+    rendered_picture Bishop_bl = render_image(pieces.bishop_bl);
+    rendered_picture Rook_bl = render_image(pieces.rook_bl);
+    rendered_picture Queen_bl = render_image(pieces.queen_bl);
+    rendered_picture King_bl = render_image(pieces.king_bl);
+    rendered_picture greenBall = render_image(pieces.green_ball);
+    rendered_picture wKing_check = render_image(pieces.wking_check);
 } rendered_images;
 
 
@@ -609,7 +598,7 @@ inline void drawPossibleMoves( const std::vector< coordinates >& moves, const co
         aux = aux0 + square_to_pos(a_move, square_width*8, square_height*8, false);
 
 
-        render_image(&pieces.green_ball, aux.x, aux.y);
+        render_image(pieces.green_ball, aux.x, aux.y);
         
     }
 }

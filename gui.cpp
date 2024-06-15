@@ -46,10 +46,18 @@ struct textField {
     std::deque<HWND> boxes; // will store all the created text windows that are created and will delete the old ones.
 };
 
+struct Button {
+    int32_t height = 30;
+    int32_t width = 100;
+
+    std::deque<HWND> buttons; // will store all the created buttons that are created and will delete the old ones.
+};
+
 
 
 static renderState render_state;
 static textField text_field;
+static Button a_button;
 
 HBITMAP hBitmap = NULL;
 
@@ -62,7 +70,9 @@ HBITMAP hBitmap = NULL;
 #include "backend/board.hpp"
 #include "backend/game.hpp"
 
-static std::shared_ptr<Board> board_ptr;
+
+static Game game_object;
+static std::shared_ptr<Board> board_ptr = game_object.new_game().lock();
 
 #define process_button(b, vk)\
 case vk: {\
@@ -74,7 +84,7 @@ case vk: {\
 
 extern const UINT_PTR IDT_TIMER1 = 0;
 static long count = 0;
-HWND button;
+
 
 LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -90,27 +100,33 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             running = false;
         } break;
 
+        // this will be called when the main window is created
         case WM_CREATE: {
-            //display_button("render_text", render_state.width + text_field.width, 0, hwnd);
+            //display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd);
             break;
         }
 
-        
+        // this will be called by the timer at certain intervals
         case WM_TIMER: {
             case IDT_TIMER1: {
                 // we use the below std::cout for displaying the total frames of the last 10 seconds
-                //std::cout << "count: " << count/10 << "\n";
+                std::cout << "count: " << count << "\n";
                 count = 0;
                 return 0;
             }
 
         } break;
 
-
+    
         case WM_COMMAND:
             switch ( LOWORD(wParam) ) {
                 case 1:
-                    std::cout << "joo" << "\n";
+                    //std::cout << "joo" << "\n";
+                    game_object.get_game(0).lock()->add_shuffled_pieces();
+                    draw_chessboard(render_state.width, render_state.height);
+                    draw_pieces(board_ptr);
+                    //display_all_text(600, 0, hwnd);
+                    //display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd);
                     break;
             }
             break;
@@ -120,10 +136,10 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             GetClientRect(hwnd, &rect);
 
             text_field.width = (rect.right - rect.left)/3;
-            render_state.width = rect.right - rect.left - text_field.width;
+            render_state.width = rect.right - rect.left - text_field.width - a_button.width;
             render_state.height = rect.bottom - rect.top;
 
-            int size = render_state.width * render_state.height * sizeof(unsigned int);
+            uint32_t size = render_state.width * render_state.height * sizeof(unsigned int);
 
             if ( render_state.memory ) { VirtualFree(render_state.memory, 0, MEM_RELEASE); }
 
@@ -139,10 +155,12 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             
             text_field.height = render_state.height;
 
-            display_button("render_text", render_state.width + text_field.width, 0, hwnd);
+
             draw_chessboard(render_state.width, render_state.height);
             draw_pieces(board_ptr);
             display_all_text(600, 0, hwnd);
+            display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd);
+            
         } break;
 
 
@@ -160,10 +178,10 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nShowCmd)
 {
-    Game game_object;
     
-    board_ptr = game_object.new_game().lock();
-    board_ptr->add_shuffled_pieces();
+    //std::shared_ptr<Board> board_ptr = game_object.new_game().lock();
+    board_ptr->add_pieces();
+    
 
     std::weak_ptr<Square> a_square = std::weak_ptr<Square>();
 
@@ -206,7 +224,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         WS_OVERLAPPEDWINDOW | WS_VISIBLE,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
-        600 + text_field.width + 100,
+        600 + text_field.width + a_button.width,
         600,
         0,
         0,
@@ -235,7 +253,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     // we create a timer to calculate framerate
     SetTimer(window,             // handle to main window 
             IDT_TIMER1,          // timer identifier 
-            10000,                // 10-second interval 
+            1000,                // 10-second interval 
             (TIMERPROC) NULL);
 
     
@@ -245,6 +263,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     draw_pieces(board_ptr);
 
     display_all_text(600, 0, window);
+    
 
 
     while (running) {
@@ -412,12 +431,20 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                     
                 } break;
                 
-
+                /*
+                commented this part out and added the functions outside the
+                switch statement because I noticed that I need to call these functions every time, not just
+                when the switch cases don't happen.
                 default: {
                     TranslateMessage(&message);
                     DispatchMessage(&message);
-                }
+                }*/
+
+                
+
             }
+            TranslateMessage(&message);
+            DispatchMessage(&message);
             
         }
 
