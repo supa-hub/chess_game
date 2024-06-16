@@ -432,7 +432,7 @@ inline rendered_picture render_image(HANDLE image, bool invert = false)
  We render the images beforehand so we dont have to 
  load the images and calculate their pixel
  values every frame. Then we can just get the
- values from memory
+ values from memory.
 */
 struct 
 {
@@ -450,6 +450,7 @@ struct
     rendered_picture King_bl = render_image(pieces.king_bl);
     rendered_picture greenBall = render_image(pieces.green_ball);
     rendered_picture wKing_check = render_image(pieces.wking_check);
+    rendered_picture blKing_check = render_image(pieces.blking_check);
 } rendered_images;
 
 
@@ -544,7 +545,9 @@ inline void draw_pieces(std::weak_ptr<Board> board_ptr)
                         break;
                     
                     case KING*10:
-                        picture = rendered_images.King_bl;
+
+                        if ( board_ptr.lock()->is_check(a_piece.lock()->tell_color()) ) picture = rendered_images.blKing_check;
+                        else { picture = rendered_images.King_bl; }
                         break;
 
                     

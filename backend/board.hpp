@@ -38,10 +38,10 @@ class Board
 
         std::unordered_set<int32_t> already_used; // well use this for when we shuffle around pieces (it's a special gamemode)
 
-        // we will create a 8x8 board into this container
+        // we will create a 8x8 board into this container ( NOTE: you can specify a custom board size, but the pieces will be in the 1 to 8 squares )
         std::vector< std::vector< std::shared_ptr<Square> >> all_squares;
 
-        int32_t board_length = 0;
+        int32_t board_length = 0; // we will use this member in the future if we want to create a game with different board sizes
 
 
     public:
@@ -170,7 +170,9 @@ class Board
             already_used.clear();
             already_used.reserve(16);
             
-            
+            player_turn = WHITE;
+
+
             return;
         }
 

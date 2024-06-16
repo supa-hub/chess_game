@@ -49,6 +49,7 @@ struct textField {
 struct Button {
     int32_t height = 30;
     int32_t width = 100;
+    size_t max_button_count = 2;
 
     std::deque<HWND> buttons; // will store all the created buttons that are created and will delete the old ones.
 };
@@ -102,7 +103,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
         // this will be called when the main window is created
         case WM_CREATE: {
-            //display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd);
+            //display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd, 1);
             break;
         }
 
@@ -120,13 +121,29 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
     
         case WM_COMMAND:
             switch ( LOWORD(wParam) ) {
+
+                // this case is when we want to start a game with shuffled pieces
                 case 1:
                     //std::cout << "joo" << "\n";
                     game_object.get_game(0).lock()->add_shuffled_pieces();
                     draw_chessboard(render_state.width, render_state.height);
                     draw_pieces(board_ptr);
                     //display_all_text(600, 0, hwnd);
-                    //display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd);
+                    //display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd, 1);
+                    break;
+
+
+                // this case is used when we hit the reset button and we start the game from the beginning
+                case 2:
+                    game_object.end_game(0);
+                    board_ptr = game_object.new_game().lock();
+                    board_ptr->add_pieces();
+                    text_field.text.clear();
+
+                    draw_chessboard(render_state.width, render_state.height);
+                    draw_pieces(board_ptr);
+                    display_all_text(600, 0, hwnd);
+                    //display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd, 1);
                     break;
             }
             break;
@@ -159,7 +176,8 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             draw_chessboard(render_state.width, render_state.height);
             draw_pieces(board_ptr);
             display_all_text(600, 0, hwnd);
-            display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd);
+            display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd, 1);
+            display_button("reset_game", render_state.width + text_field.width, a_button.height+10, hwnd, 2);
             
         } break;
 

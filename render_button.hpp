@@ -10,7 +10,7 @@
 
 
 // simple function to abstract the creation of a window button
-inline void display_button(std::string text, const int32_t& x, const int32_t& y, HWND hwnd)
+inline void display_button(std::string text, const int32_t& x, const int32_t& y, HWND hwnd, const int64_t& command)
 {
     std::string standard = "BUTTON";
     std::wstring standard1 = std::wstring(standard.begin(), standard.end());
@@ -24,15 +24,18 @@ inline void display_button(std::string text, const int32_t& x, const int32_t& y,
                         text1.c_str(),
                         WS_VISIBLE | WS_CHILD | WS_BORDER | BS_LEFT,
                         x, y, a_button.width, a_button.height,
-                        hwnd, (HMENU) 1, NULL, NULL
+                        hwnd, (HMENU) command, NULL, NULL
                         );
 
-    if ( a_button.buttons.size() ) {
+    
+    if ( a_button.buttons.size() > a_button.max_button_count ) {
         DestroyWindow(a_button.buttons.front());
         a_button.buttons.pop_front();
     }
 
+
     a_button.buttons.push_back( button );
+    
 }
 
 

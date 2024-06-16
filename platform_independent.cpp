@@ -73,6 +73,7 @@ const struct
     HANDLE king_bl = getImageData("king_bl");
     HANDLE green_ball = getImageData("green_ball");
     HANDLE wking_check = getImageData("king_in_check");
+    HANDLE blking_check = getImageData("king_bl_in_check");
 
 } pieces;
 
