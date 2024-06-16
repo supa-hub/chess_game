@@ -159,49 +159,82 @@ class RGB_t
         
 
     public:
-        uint32_t red = 0;
-        uint32_t green = 0;
-        uint32_t blue = 0;
 
+        uint32_t color = 0;
 
 
         // define some constructors
         constexpr RGB_t() noexcept { }
 
-        constexpr RGB_t(uint32_t red, uint32_t green, uint32_t blue) noexcept : red(red), green(green), blue(blue) { } 
+        constexpr RGB_t(uint32_t red, uint32_t green, uint32_t blue) noexcept : color( ( red << 16 ) + ( green << 8 ) + blue ) { } 
 
         constexpr RGB_t(uint32_t hex) noexcept
         { 
-            this->red = ( hex & red_hex ) >> 16;
-            this->green = ( hex & green_hex ) >> 8;
-            this->blue = hex & blue_hex;
+            color = hex;
         } 
 
-
+        
         inline uint32_t get_int() noexcept
         {
-            return ( this->red << 16 ) | ( this->green << 8 ) | ( this->blue ) ;
+            return color;
         }
+
+        inline uint32_t red() noexcept
+        {
+            return  ( color & red_hex ) >> 16;
+        }
+
+        inline uint32_t green() noexcept
+        {
+            return  ( color & green_hex ) >> 8;
+        }
+
+        inline uint32_t blue() noexcept
+        {
+            return  ( color & blue_hex ) >> 0;
+        }
+
+        inline bool red(uint32_t num) noexcept
+        {
+            color = ( color & ~red_hex ) | ( ( num << 16 ) & red_hex );
+
+            return true;
+        }
+
+        inline bool green(uint32_t num) noexcept
+        {
+            color = ( color & ~green_hex ) | ( ( num << 8 ) & green_hex );
+
+            return true;
+        }
+
+        inline bool blue(uint32_t num) noexcept
+        {
+            color = ( color & ~blue_hex ) | ( num & blue_hex );
+
+            return true;
+        }
+
 
         inline RGB_t operator + ( RGB_t color ) noexcept 
         {
-            return { this->red + color.red, this->green + color.green, this->blue + color.blue };
+            return { this->red() + color.red(), this->green() + color.green(), this->blue() + color.blue() };
         }
 
         inline RGB_t operator - ( RGB_t color ) noexcept
         {
-            return { this->red - color.red, this->green - color.green, this->blue - color.blue };
+            return { this->red() - color.red(), this->green() - color.green(), this->blue() - color.blue() };
         }
 
         inline RGB_t operator = ( uint32_t num ) noexcept
         {
-            return { to_rgb(num) };
+            return { this->to_rgb(num) };
         }
 
 
         inline RGB_t to_rgb( uint32_t hex ) noexcept
         {
-            return { ( hex & red_hex ) | ( hex & green_hex ) | ( hex & blue_hex ) };
+            return { color = hex };
         }
 
 
@@ -209,7 +242,7 @@ class RGB_t
         template<typename T>
         inline bool operator < ( T value )
         {
-            return { get_int() < value };
+            return { this->get_int() < value };
         }
 
 

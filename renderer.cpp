@@ -257,15 +257,15 @@ inline void render_image(const HANDLE image, const int32_t& x, const int32_t& y,
             for ( uint32_t j = 0; j < 3; j++ ) {
                 switch ( j ) {
                     case 0: 
-                        rgb.red = *image_data++;
+                        rgb.red( *image_data++ );
                         break;
 
                     case 1: 
-                        rgb.green = *image_data++;
+                        rgb.green( *image_data++ );
                         break;
 
                     case 2: 
-                        rgb.blue = *image_data++;
+                        rgb.blue( *image_data++ );
                         break;
 
                     default:
@@ -368,15 +368,15 @@ inline rendered_picture render_image(HANDLE image, bool invert = false)
             for ( uint32_t j = 0; j < 3; j++ ) {
                 switch ( j ) {
                     case 0: 
-                        rgb.red = *image_data++;
+                        rgb.red( *image_data++ );
                         break;
 
                     case 1: 
-                        rgb.green = *image_data++;
+                        rgb.green( *image_data++ );
                         break;
 
                     case 2: 
-                        rgb.blue = *image_data++;
+                        rgb.blue( *image_data++ );
                         break;
 
                     default:
