@@ -238,8 +238,8 @@ class Board
             int cycle = 0;
 
             // with this nested loop we create all the squares
-            for ( int i = 7; i > -1; i-- ) {
-                for ( int j = 7; j > -1; j-- ) {
+            for ( int i = this->board_length-1; i > -1; i-- ) {
+                for ( int j = this->board_length-1; j > -1; j-- ) {
 
                     // here we use normal initialisation because if we use std::make_shared the objects
                     // wont be deleted until all the weak pointers go out of scope.
@@ -697,6 +697,9 @@ class Board
         // This method will be the main way the code filters out the places the the piece cannot 
         // go to at that moment.
         std::vector<coordinates> doesnt_get_in_check( weakPiecePtr a_piece, coordinates current);
+
+        // with this method we'll check if the king can castle
+        bool king_castling();
         
  
 };
@@ -822,7 +825,7 @@ constString Board::is_checkmate()
 constString Board::is_checkmate(const constString& color_to_check)
 {
     std::vector< coordinate_ptr > king_coords = this->find_kings();
-    std::string king_color;
+    constString king_color;
 
     if ( king_coords.empty()) {
         return "";
@@ -903,6 +906,14 @@ std::vector<coordinates> Board::doesnt_get_in_check(weakPiecePtr a_piece, coordi
 
     return possible_moves;
     
+}
+
+
+
+
+bool Board::king_castling()
+{
+    return false;
 }
 
 

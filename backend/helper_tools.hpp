@@ -191,7 +191,7 @@ class RGB_t
 
         inline uint32_t blue() noexcept
         {
-            return  ( color & blue_hex ) >> 0;
+            return  ( color & blue_hex );
         }
 
         // assign certain color values
@@ -254,12 +254,6 @@ class RGB_t
 
 
 
-/*
-inline std::vector< std::unique_ptr<coordinates> > kings_possible_moves(std::weak_ptr<Board> board_ptr)
-{
-
-}
-*/
 
 
 

@@ -85,6 +85,7 @@ case vk: {\
 
 
 extern const UINT_PTR IDT_TIMER1 = 0;
+extern const UINT_PTR IDT_TIMER2 = 0x000016;
 static long count = 0;
 
 
@@ -92,7 +93,8 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 {
 
     LRESULT result = 0;
-    HDC hdc = GetDC(hwnd);
+    HDC hdc = GetDC(hwnd); // create a device context to use StretchDIBits()
+    
 
     switch (uMsg) {
         case WM_CLOSE:
@@ -105,17 +107,54 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
         // this will be called when the main window is created
         case WM_CREATE: {
-            //display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd, 1);
             break;
         }
 
         // this will be called by the timer at certain intervals
         case WM_TIMER: {
-            case IDT_TIMER1: {
-                // we use the below std::cout for displaying the total frames of the last 10 seconds
-                std::cout << "count: " << count << "\n";
-                count = 0;
-                return 0;
+            switch ( wParam ) {
+
+                case IDT_TIMER1: {
+                    // we use the below std::cout for displaying the total frames of the last 10 seconds
+                    std::cout << "count: " << count << "\n";
+                    count = 0;
+                    break;
+                }
+
+                // this will trigger for every frame in a framerate
+                case IDT_TIMER2: {
+                    StretchDIBits(
+                        hdc, 
+                        0, 
+                        0, 
+                        render_state.width,
+                        render_state.height, 
+                        0, 
+                        0, 
+                        render_state.width,
+                        render_state.height,  
+                        render_state.memory, 
+                        &render_state.bitmap_info, 
+                        DIB_RGB_COLORS, 
+                        SRCCOPY);
+
+
+                    BitBlt(
+                        hdc,
+                        0, 
+                        0, 
+                        render_state.width,
+                        render_state.height, 
+                        hdc,
+                        0, 
+                        0, 
+                        SRCCOPY
+                    );
+
+
+
+                    break;
+                }
             }
 
         } break;
@@ -131,6 +170,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                     draw_chessboard(render_state.width, render_state.height);
                     draw_pieces(board_ptr);
 
+                    /*
                     StretchDIBits(
                         hdc, 
                         0, 
@@ -145,6 +185,9 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                         &render_state.bitmap_info, 
                         DIB_RGB_COLORS, 
                         SRCCOPY);
+                    */
+                    
+
                     //display_all_text(600, 0, hwnd);
                     //display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd, 1);
                     break;
@@ -161,6 +204,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                     draw_pieces(board_ptr);
                     display_all_text(600, 0, hwnd);
 
+                    /*
                     StretchDIBits(
                         hdc, 
                         0, 
@@ -175,6 +219,8 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                         &render_state.bitmap_info, 
                         DIB_RGB_COLORS, 
                         SRCCOPY);
+                    */
+                    
                     //display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd, 1);
                     break;
             }
@@ -211,6 +257,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd, 1);
             display_button("reset_game", render_state.width + text_field.width, a_button.height+10, hwnd, 2);
 
+            /*
             StretchDIBits(
                 hdc, 
                 0, 
@@ -225,18 +272,20 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                 &render_state.bitmap_info, 
                 DIB_RGB_COLORS, 
                 SRCCOPY);
+            */
+
             
         } break;
 
 
 
-    
 
         default: {
             result = DefWindowProc(hwnd, uMsg, wParam, lParam);
         }
     }
 
+    ReleaseDC(hwnd, hdc);
     return result;
 }
 
@@ -266,6 +315,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     coordinates old_clicked_square;
 
     bool piece_just_moved = false; // checks whether we just moved a piece
+    
 
     // we use these to get the position of the window
     RECT rect;
@@ -311,18 +361,29 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     HDC hdc = GetDC(window);
 
+
     Input input = {};
 
     unsigned long long button_state = 0;
     
+    
     // we create a timer to calculate framerate
     SetTimer(window,             // handle to main window 
             IDT_TIMER1,          // timer identifier 
-            1000,                // 10-second interval 
+            1000,                // 1-second interval 
             (TIMERPROC) NULL);
+    
 
     
+    // a timer to set the framerate
+    SetTimer(window,             // handle to main window 
+        IDT_TIMER2,          // timer identifier 
+        1,                // 1-millisecond interval 
+        (TIMERPROC) NULL);
     
+    
+    
+    // initial renders
     draw_chessboard(render_state.width, render_state.height);
 
     draw_pieces(board_ptr);
@@ -353,23 +414,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         }
 
         
-       
-        BitBlt(
-            hdc,
-            0, 
-            0, 
-            render_state.width,
-            render_state.height, 
-            hdc,
-            0, 
-            0, 
-            SRCCOPY
-        );
-        
         
 
         while (PeekMessage(&message, window, 0, 0, PM_REMOVE)) {
 
+            
             switch (message.message) {
 
                 case WM_KEYUP:
@@ -501,21 +550,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                                     render_state.width, 
                                     render_state.height
                                 );
-                    
-                    StretchDIBits(
-                        hdc, 
-                        0, 
-                        0, 
-                        render_state.width,
-                        render_state.height, 
-                        0, 
-                        0, 
-                        render_state.width,
-                        render_state.height,  
-                        render_state.memory, 
-                        &render_state.bitmap_info, 
-                        DIB_RGB_COLORS, 
-                        SRCCOPY);
 
                     
                 } break;
@@ -534,9 +568,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             }
             TranslateMessage(&message);
             DispatchMessage(&message);
-            
+
+            //std::cout << "here too2" << "\n";
         }
 
+        
         
         count++;
             

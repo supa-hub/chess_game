@@ -28,7 +28,7 @@ inline void display_button(std::string text, const int32_t& x, const int32_t& y,
                         );
 
     
-    if ( a_button.buttons.size() > a_button.max_button_count ) {
+    if ( a_button.buttons.size() >= a_button.max_button_count ) {
         DestroyWindow(a_button.buttons.front());
         a_button.buttons.pop_front();
     }
