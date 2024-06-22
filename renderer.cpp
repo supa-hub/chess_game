@@ -257,7 +257,7 @@ inline void render_image(const HANDLE image, const int32_t& x, const int32_t& y,
             for ( uint32_t j = 0; j < 3; j++ ) {
                 switch ( j ) {
                     case 0: 
-                        rgb.red( *image_data++ );
+                        rgb.blue( *image_data++ );
                         break;
 
                     case 1: 
@@ -265,7 +265,7 @@ inline void render_image(const HANDLE image, const int32_t& x, const int32_t& y,
                         break;
 
                     case 2: 
-                        rgb.blue( *image_data++ );
+                        rgb.red( *image_data++ );
                         break;
 
                     default:
@@ -368,7 +368,7 @@ inline rendered_picture render_image(HANDLE image, bool invert = false)
             for ( uint32_t j = 0; j < 3; j++ ) {
                 switch ( j ) {
                     case 0: 
-                        rgb.red( *image_data++ );
+                        rgb.blue( *image_data++ );
                         break;
 
                     case 1: 
@@ -376,7 +376,7 @@ inline rendered_picture render_image(HANDLE image, bool invert = false)
                         break;
 
                     case 2: 
-                        rgb.blue( *image_data++ );
+                        rgb.red( *image_data++ );
                         break;
 
                     default:
@@ -520,7 +520,8 @@ inline void draw_pieces(std::weak_ptr<Board> board_ptr)
 
                         // if the king is in check, then we draw a different picture, if its not in check, then 
                         // we draw the normal king piece
-                        if ( board_ptr.lock()->is_check(a_piece.lock()->tell_color()) ) picture = rendered_images.wKing_check;
+                        if ( board_ptr.lock()->is_check(a_piece.lock()->tell_color()) ) 
+                            picture = rendered_images.wKing_check;
                         else { picture = rendered_images.King; }
                         break;
 
@@ -605,7 +606,6 @@ inline void drawPossibleMoves( const std::vector< coordinates >& moves, const co
         
     }
 }
-
 
 
 

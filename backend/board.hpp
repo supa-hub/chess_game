@@ -15,8 +15,10 @@
 #include "square.hpp"
 #include "helper_tools.hpp"
 
+
 // simplify type declarations
 typedef std::string aString;
+typedef std::string_view constString;
 typedef std::weak_ptr<Piece> weakPiecePtr; 
 typedef std::shared_ptr<Piece> sharedPiecePtr;
 typedef std::unique_ptr<coordinates> coordinate_ptr;
@@ -33,8 +35,8 @@ class Board
         // we keep count of each players score
         int score1 = 0;
         int score2 = 0;
-        std::vector<aString> captured_pieces_white; // the pieces that white has captured
-        std::vector<aString> captured_pieces_black; // the pieces that black has captured
+        std::vector<constString> captured_pieces_white; // the pieces that white has captured
+        std::vector<constString> captured_pieces_black; // the pieces that black has captured
 
         std::unordered_set<int32_t> already_used; // well use this for when we shuffle around pieces (it's a special gamemode)
 
@@ -452,7 +454,7 @@ class Board
             
             const std::vector< coordinate_ptr >& moves = a_piece->possible_moves();
             int32_t piece_id = a_piece->tell_id(); 
-            std::string color = a_piece->tell_color();
+            constString color{ a_piece->tell_color() };
             int32_t color_id = a_piece->tell_color_id();
 
 
@@ -542,7 +544,7 @@ class Board
         {
             coordinates aux0 = current;
             coordinates aux;
-            std::string color = a_piece->tell_color();
+            constString color{ a_piece->tell_color() };
             int32_t color_id = a_piece->tell_color_id();
 
             std::shared_ptr<Square> a_square;
@@ -637,7 +639,7 @@ class Board
                             continue;
                     }
 
-                    const std::string color = a_piece->tell_color();
+                    aString color = a_piece->tell_color();
 
 
                     // because the pawn doesnt attack with all of its moves, we have to create a special case for it.
@@ -685,12 +687,12 @@ class Board
 
         // these  methods will tell us if the king is in check.
         bool is_check();
-        std::string is_checkmate();
+        constString is_checkmate();
 
         // The below 2 overloads are almost the same as the original methods but they
         // look for check and ckeckmate for a specific color.
-        bool is_check(std::string color_to_check);
-        std::string is_checkmate(std::string color_to_check);
+        bool is_check(const constString& color_to_check);
+        constString is_checkmate(const constString& color_to_check);
 
         // This method will be the main way the code filters out the places the the piece cannot 
         // go to at that moment.
@@ -718,7 +720,7 @@ bool Board::is_check()
     */
     for ( coordinate_ptr& coords : king_coords ) {
         // loop through the piece colors that attack the square
-        for ( std::string a_color : get_square(*coords).lock()->attacking_colors() ) {
+        for ( aString a_color : get_square(*coords).lock()->attacking_colors() ) {
 
 
             // We check if the square that the king is on is attacked by an opposite color piece
@@ -736,7 +738,7 @@ bool Board::is_check()
  We check if a king of certain color is in check. 
  We need this for example when white tries to move a pawn but the white king is in check.
 */
-bool Board::is_check(std::string color_to_check)
+bool Board::is_check(const constString& color_to_check)
 {   
 
 
@@ -757,7 +759,7 @@ bool Board::is_check(std::string color_to_check)
         if ( king_color != color_to_check ) { continue; }
 
         // loop through the piece colors that attack the square
-        for ( std::string a_color : get_square(*coords).lock()->attacking_colors() ) {
+        for ( aString a_color : get_square(*coords).lock()->attacking_colors() ) {
 
             //std::cout << "a color: " << a_color << "\n";
 
@@ -777,7 +779,7 @@ bool Board::is_check(std::string color_to_check)
  We check if the game ends because a king is in checkmate.
  This method returns the color that checkmated the king, e.g the opponents color.
 */
-std::string Board::is_checkmate()
+constString Board::is_checkmate()
 {
     std::vector< coordinate_ptr > king_coords = this->find_kings();
 
@@ -786,7 +788,7 @@ std::string Board::is_checkmate()
     }
 
     for ( coordinate_ptr& coords : king_coords ) {
-        for ( std::string a_color : get_square(*coords).lock()->attacking_colors() ) {
+        for ( constString a_color : get_square(*coords).lock()->attacking_colors() ) {
 
             sharedPiecePtr king = get_square(*coords).lock()->get_piece().lock();
             
@@ -817,7 +819,7 @@ std::string Board::is_checkmate()
 
 
 // we check if the game ends because a king is in checkmate
-std::string Board::is_checkmate(std::string color_to_check)
+constString Board::is_checkmate(const constString& color_to_check)
 {
     std::vector< coordinate_ptr > king_coords = this->find_kings();
     std::string king_color;
@@ -827,7 +829,7 @@ std::string Board::is_checkmate(std::string color_to_check)
     }
 
     for ( coordinate_ptr& coords : king_coords ) {
-        for ( std::string a_color : get_square(*coords).lock()->attacking_colors() ) {
+        for ( constString a_color : get_square(*coords).lock()->attacking_colors() ) {
 
             sharedPiecePtr king = get_square(*coords).lock()->get_piece().lock();
 
@@ -874,7 +876,7 @@ std::vector<coordinates> Board::doesnt_get_in_check(weakPiecePtr a_piece, coordi
     sharedPiecePtr removed_piece;
     if ( a_piece.expired() ) return possible_moves;
 
-    std::string color_to_check = a_piece.lock()->tell_color();
+    constString color_to_check{ a_piece.lock()->tell_color() };
     
 
     // filter out the places that the piece cannot go to

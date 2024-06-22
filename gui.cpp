@@ -25,6 +25,7 @@ Copyright (C) 2024  Tomi Bilcu a.k.a supa-hub
 #include <stdint.h>
 #include <algorithm>
 #include <deque>
+#include <string_view>
 
 
 static bool running = true;
@@ -91,6 +92,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 {
 
     LRESULT result = 0;
+    HDC hdc = GetDC(hwnd);
 
     switch (uMsg) {
         case WM_CLOSE:
@@ -128,6 +130,21 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                     game_object.get_game(0).lock()->add_shuffled_pieces();
                     draw_chessboard(render_state.width, render_state.height);
                     draw_pieces(board_ptr);
+
+                    StretchDIBits(
+                        hdc, 
+                        0, 
+                        0, 
+                        render_state.width,
+                        render_state.height, 
+                        0, 
+                        0, 
+                        render_state.width,
+                        render_state.height,  
+                        render_state.memory, 
+                        &render_state.bitmap_info, 
+                        DIB_RGB_COLORS, 
+                        SRCCOPY);
                     //display_all_text(600, 0, hwnd);
                     //display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd, 1);
                     break;
@@ -143,6 +160,21 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                     draw_chessboard(render_state.width, render_state.height);
                     draw_pieces(board_ptr);
                     display_all_text(600, 0, hwnd);
+
+                    StretchDIBits(
+                        hdc, 
+                        0, 
+                        0, 
+                        render_state.width,
+                        render_state.height, 
+                        0, 
+                        0, 
+                        render_state.width,
+                        render_state.height,  
+                        render_state.memory, 
+                        &render_state.bitmap_info, 
+                        DIB_RGB_COLORS, 
+                        SRCCOPY);
                     //display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd, 1);
                     break;
             }
@@ -178,6 +210,21 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             display_all_text(600, 0, hwnd);
             display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd, 1);
             display_button("reset_game", render_state.width + text_field.width, a_button.height+10, hwnd, 2);
+
+            StretchDIBits(
+                hdc, 
+                0, 
+                0, 
+                render_state.width,
+                render_state.height, 
+                0, 
+                0, 
+                render_state.width,
+                render_state.height,  
+                render_state.memory, 
+                &render_state.bitmap_info, 
+                DIB_RGB_COLORS, 
+                SRCCOPY);
             
         } break;
 
@@ -282,7 +329,20 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     display_all_text(600, 0, window);
     
-
+    StretchDIBits(
+        hdc, 
+        0, 
+        0, 
+        render_state.width,
+        render_state.height, 
+        0, 
+        0, 
+        render_state.width,
+        render_state.height,  
+        render_state.memory, 
+        &render_state.bitmap_info, 
+        DIB_RGB_COLORS, 
+        SRCCOPY);
 
     while (running) {
 
@@ -293,22 +353,18 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         }
 
         
-        StretchDIBits(
-            hdc, 
+       
+        BitBlt(
+            hdc,
             0, 
             0, 
             render_state.width,
             render_state.height, 
+            hdc,
             0, 
             0, 
-            render_state.width,
-            render_state.height,  
-            render_state.memory, 
-            &render_state.bitmap_info, 
-            DIB_RGB_COLORS, 
-            SRCCOPY);
-        
-
+            SRCCOPY
+        );
         
         
 
@@ -445,6 +501,21 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                                     render_state.width, 
                                     render_state.height
                                 );
+                    
+                    StretchDIBits(
+                        hdc, 
+                        0, 
+                        0, 
+                        render_state.width,
+                        render_state.height, 
+                        0, 
+                        0, 
+                        render_state.width,
+                        render_state.height,  
+                        render_state.memory, 
+                        &render_state.bitmap_info, 
+                        DIB_RGB_COLORS, 
+                        SRCCOPY);
 
                     
                 } break;

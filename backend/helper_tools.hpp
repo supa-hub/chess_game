@@ -194,6 +194,8 @@ class RGB_t
             return  ( color & blue_hex ) >> 0;
         }
 
+        // assign certain color values
+        // assign the red value
         inline bool red(uint32_t num) noexcept
         {
             color = ( color & ~red_hex ) | ( ( num << 16 ) & red_hex );
@@ -201,6 +203,7 @@ class RGB_t
             return true;
         }
 
+        // assign the green value
         inline bool green(uint32_t num) noexcept
         {
             color = ( color & ~green_hex ) | ( ( num << 8 ) & green_hex );
@@ -208,6 +211,7 @@ class RGB_t
             return true;
         }
 
+        // assign the blue value
         inline bool blue(uint32_t num) noexcept
         {
             color = ( color & ~blue_hex ) | ( num & blue_hex );
