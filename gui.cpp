@@ -72,9 +72,10 @@ HBITMAP hBitmap = NULL;
 #include "backend/board.hpp"
 #include "backend/game.hpp"
 
+using helper::coordinates;
 
 static Game game_object;
-static std::shared_ptr<Board> board_ptr = game_object.new_game().lock();
+static std::shared_ptr<Board> board_ptr = game_object.new_game();
 
 #define process_button(b, vk)\
 case vk: {\
@@ -166,9 +167,12 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                 // this case is when we want to start a game with shuffled pieces
                 case 1:
                     //std::cout << "joo" << "\n";
-                    game_object.get_game(0).lock()->add_shuffled_pieces();
+                    game_object.current()->add_shuffled_pieces();
+                    text_field.text.clear();
+
                     draw_chessboard(render_state.width, render_state.height);
-                    draw_pieces(board_ptr);
+                    draw_pieces(game_object.current());
+                    display_all_text(600, 0, hwnd);
 
                     /*
                     StretchDIBits(
@@ -196,12 +200,12 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                 // this case is used when we hit the reset button and we start the game from the beginning
                 case 2:
                     game_object.end_game(0);
-                    board_ptr = game_object.new_game().lock();
+                    board_ptr = game_object.new_game();
                     board_ptr->add_pieces();
                     text_field.text.clear();
 
                     draw_chessboard(render_state.width, render_state.height);
-                    draw_pieces(board_ptr);
+                    draw_pieces(game_object.current());
                     display_all_text(600, 0, hwnd);
 
                     /*
@@ -252,7 +256,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 
             draw_chessboard(render_state.width, render_state.height);
-            draw_pieces(board_ptr);
+            draw_pieces(game_object.current());
             display_all_text(600, 0, hwnd);
             display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd, 1);
             display_button("reset_game", render_state.width + text_field.width, a_button.height+10, hwnd, 2);
@@ -313,6 +317,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     coordinates mouse_click;
 
     coordinates old_clicked_square;
+
+    std::string new_text;
 
     bool piece_just_moved = false; // checks whether we just moved a piece
     
@@ -386,7 +392,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     // initial renders
     draw_chessboard(render_state.width, render_state.height);
 
-    draw_pieces(board_ptr);
+    draw_pieces(game_object.current());
 
     display_all_text(600, 0, window);
     
@@ -481,37 +487,22 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                         if ( clicked_square.lock()->coordinates() != a_square.lock()->coordinates() && 
                         !(clicked_square.lock()->get_piece().expired()) ) {
                             
-                            // with this for loop we check if the square that we clicked on can be moved to by our piece,
-                            // so basically if the square is in the possible moves.
-                            clicked_piece = clicked_square.lock()->get_piece().lock();
-                            can_go = board_ptr->doesnt_get_in_check( clicked_piece, clicked_square.lock()->coordinates() );
 
-                            for (  const coordinates& a_move : can_go ) {
+                            new_text = game_object.move_piece( clicked_square, a_square, mouse_click, render_state.width, render_state.height );
 
-                                // this is the difference between the clicked_square and a_square.
-                                move_vec =  board_ptr->convert_pos(mouse_click.x, mouse_click.y, render_state.width, render_state.height) - clicked_square.lock()->coordinates();
+                            if ( !new_text.empty() ) {
+                                text_field.text.push_back( new_text );
+                                piece_just_moved = true;
+                            }
 
-                                if ( move_vec  == a_move ) {
-                                    //std::cout << clicked_square.lock()->get_piece().lock()->tell_name() << "\n"; 
+                            display_all_text(600, 0, window);
 
-                                    if ( board_ptr->move_piece(clicked_square, a_square) ) {
-                                        text_field.text.push_back( a_square.lock()->get_piece().lock()->tell_name() + a_square.lock()->coordinates().toChesstring() + "\n" );
-                                    }
-
-                                    display_all_text(600, 0, window);
-
-                                    
+                            
                                     /*
                                     draw_chessboard(render_state.width, render_state.height);
                                     drawRedSquare(mouse_click.x, mouse_click.y);
 
                                     draw_pieces(board_ptr);*/
-
-                                    piece_just_moved = true;
-                                    break;
-                                }
-                                
-                            }
 
                         }
                         
@@ -533,7 +524,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                     }
 
                     else {
-                        can_go = board_ptr->doesnt_get_in_check( clicked_square.lock()->get_piece(), clicked_square.lock()->coordinates() );
+                        can_go = game_object.current()->doesnt_get_in_check( clicked_square.lock()->get_piece(), clicked_square.lock()->coordinates() );
                     }
                     
                     
@@ -542,7 +533,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                     draw_chessboard(render_state.width, render_state.height);
                     
 
-                    draw_pieces(board_ptr);
+                    draw_pieces(game_object.current());
 
                     drawPossibleMoves1(
                                     can_go, 

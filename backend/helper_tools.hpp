@@ -9,6 +9,40 @@
 #include <string>
 #include <array>
 
+#ifdef RGB
+#undef RGB
+#endif
+
+enum pieces
+{
+    PAWN = 1,
+    KNIGHT,
+    BISHOP,
+    ROOK,
+    QUEEN,
+    KING,
+
+    PIECES_COUNT
+};
+
+enum color_id
+{
+    WHITE,
+    BLACK,
+    GREY,
+    RED,
+    GREEN,
+    BLUE,
+
+
+    COLOR_COUNT
+};
+
+
+// create a namespace to stop any namespace errors
+namespace helper
+{
+
 static std::array<std::string, 8> chess_letters = {"a", "b", "c", "d", "e", "f", "g"};
 
 
@@ -97,31 +131,6 @@ constexpr inline T clamp(const T& value, const T& smallest, const T& largest) no
 
 
 
-enum pieces
-{
-    PAWN = 1,
-    KNIGHT,
-    BISHOP,
-    ROOK,
-    QUEEN,
-    KING,
-
-    PIECES_COUNT
-};
-
-enum color_id
-{
-    WHITE,
-    BLACK,
-    GREY,
-    RED,
-    GREEN,
-    BLUE,
-
-
-    COLOR_COUNT
-};
-
 
 inline coordinates square_to_pos(const coordinates& coords, const int32_t& screen_width, const int32_t& screen_height, const bool& use_clamp)
 {
@@ -144,7 +153,7 @@ inline coordinates square_to_pos(const coordinates& coords, const int32_t& scree
 }
 
 
-class RGB_t
+class RGB
 {   
     private:
         /*
@@ -164,11 +173,11 @@ class RGB_t
 
 
         // define some constructors
-        constexpr RGB_t() noexcept { }
+        constexpr RGB() noexcept { }
 
-        constexpr RGB_t(uint32_t red, uint32_t green, uint32_t blue) noexcept : color( ( red << 16 ) + ( green << 8 ) + blue ) { } 
+        constexpr RGB(uint32_t red, uint32_t green, uint32_t blue) noexcept : color( ( red << 16 ) + ( green << 8 ) + blue ) { } 
 
-        constexpr RGB_t(uint32_t hex) noexcept
+        constexpr RGB(uint32_t hex) noexcept
         { 
             color = hex;
         } 
@@ -220,23 +229,23 @@ class RGB_t
         }
 
 
-        inline RGB_t operator + ( RGB_t color ) noexcept 
+        inline RGB operator + ( RGB color ) noexcept 
         {
             return { this->red() + color.red(), this->green() + color.green(), this->blue() + color.blue() };
         }
 
-        inline RGB_t operator - ( RGB_t color ) noexcept
+        inline RGB operator - ( RGB color ) noexcept
         {
             return { this->red() - color.red(), this->green() - color.green(), this->blue() - color.blue() };
         }
 
-        inline RGB_t operator = ( uint32_t num ) noexcept
+        inline RGB operator = ( uint32_t num ) noexcept
         {
             return { this->to_rgb(num) };
         }
 
 
-        inline RGB_t to_rgb( uint32_t hex ) noexcept
+        inline RGB to_rgb( uint32_t hex ) noexcept
         {
             return { color = hex };
         }
@@ -305,6 +314,6 @@ inline bool same_direction(coordinates a, coordinates b)
     return false;
 }
 
-
+}
 
 #endif

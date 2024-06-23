@@ -19,7 +19,7 @@ class Square
 {
     private:
         aString name;
-        coordinates position;
+        helper::coordinates position;
         int id = 0;
         bool under_attack = false;
         std::vector< std::string > colors_attacking;
@@ -74,7 +74,7 @@ class Square
         sharedPiecePtr remove_piece() { return std::move(this->container); }
 
         // return the squares coordinates
-        coordinates coordinates()  { return this->position; }
+        helper::coordinates coordinates()  { return this->position; }
 
         // basically check if there's a piece that can move to this square
         bool attacked() { return this->under_attack; }

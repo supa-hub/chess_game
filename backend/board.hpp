@@ -15,13 +15,19 @@
 #include "square.hpp"
 #include "helper_tools.hpp"
 
+// because our namespace members are fairly unique, there wont be any namespace errors when doing this
+using helper::chess_letters;
+using helper::coordinates;
+
+
 
 // simplify type declarations
 typedef std::string aString;
 typedef std::string_view constString;
 typedef std::weak_ptr<Piece> weakPiecePtr; 
 typedef std::shared_ptr<Piece> sharedPiecePtr;
-typedef std::unique_ptr<coordinates> coordinate_ptr;
+typedef std::unique_ptr< coordinates > coordinate_ptr;
+
 
 
 // Base class that handles the semantics of a chessboard in the backend.
@@ -188,10 +194,10 @@ class Board
             std::shared_ptr<Square> a_square;
 
             // we ensure that the given range is in the given range of the board
-            int32_t x0 = clamp<int32_t>(start_range.x, 0, board_length-1);
+            int32_t x0 = helper::clamp<int32_t>(start_range.x, 0, board_length-1);
             //int32_t y0 = clamp<int32_t>(start_range.y, 0, board_length-1);
-            int32_t x1 = clamp<int32_t>(end_range.x, 0, board_length-1);
-            int32_t y1 = clamp<int32_t>(end_range.y, 0, board_length-1);
+            int32_t x1 = helper::clamp<int32_t>(end_range.x, 0, board_length-1);
+            int32_t y1 = helper::clamp<int32_t>(end_range.y, 0, board_length-1);
 
             std::default_random_engine generator;
             generator.seed(std::chrono::system_clock::now().time_since_epoch().count()); // give our generator a random seed
@@ -310,8 +316,8 @@ class Board
             int y1 = y/square_height;
 
             if ( use_clamp ) {
-                x1 = clamp<int32_t>(x1, 0, 7);
-                y1 = clamp<int32_t>(y1, 0, 7);
+                x1 = helper::clamp<int32_t>(x1, 0, 7);
+                y1 = helper::clamp<int32_t>(y1, 0, 7);
             }
 
 
@@ -346,7 +352,7 @@ class Board
         }
 
         // this method calls true, if the piece could be moved, and false if the piece couldn't be moved
-        bool move_piece( std::weak_ptr<Square> orig, std::weak_ptr<Square> target ) noexcept
+        bool move_piece( const std::weak_ptr<Square> orig, const std::weak_ptr<Square> target ) noexcept
         {
             if ( orig.expired() || target.expired() ) return false;
 
@@ -388,7 +394,7 @@ class Board
 
         // We use this with Board::doesnt_get_in_check() instead of the normal move_piece()
         // to prevent circular method calls.
-        void base_move(std::weak_ptr<Square> orig, std::weak_ptr<Square> target)
+        void base_move( std::weak_ptr<Square> orig, std::weak_ptr<Square> target )
         {
             if ( orig.expired() || target.expired() ) return;
 
@@ -435,7 +441,7 @@ class Board
          Checks whether the square of the given coordinates contains a chess piece.
          The method returns true, if it contains a piece, and false if the square is empty.
         */
-        bool has_piece(coordinates a) noexcept
+        bool has_piece( const coordinates& a ) noexcept
         {   
             if ( a.x >= 0 && a.x < 7 && a.y >= 0 && a.y < 7 ) {
                 return all_squares[a.x][a.y]->has_piece();
@@ -483,8 +489,8 @@ class Board
 
                 // because the king cannot move to a tile that is attacked, we have to do this check
                 // we also use clamp in these places to protect against segfault.
-                if ( piece_id == KING*pow(10, color_id) && get_square(clamp<int>(aux.x, 0, 7), clamp<int>(aux.y, 0, 7)).lock()->attacked()) {
-                    for ( aString a_color : get_square(clamp<int>(aux.x, 0, 7), clamp<int>(aux.y, 0, 7)).lock()->attacking_colors()) {
+                if ( piece_id == KING*pow(10, color_id) && get_square( helper::clamp<int>(aux.x, 0, 7), helper::clamp<int>(aux.y, 0, 7)).lock()->attacked() ) {
+                    for ( aString a_color : get_square( helper::clamp<int>(aux.x, 0, 7), helper::clamp<int>(aux.y, 0, 7)).lock()->attacking_colors()) {
                         if ( color != a_color) {
                             directions_cannot_go.push_back( vector );
                             break;
@@ -495,11 +501,11 @@ class Board
 
 
                 // check if a square has a piece, so we cannot go to the next square behind it.
-                if ( get_square(clamp<int>(aux.x, 0, 7), clamp<int>(aux.y, 0, 7)).lock()->has_piece() ) {
+                if ( get_square( helper::clamp<int>(aux.x, 0, 7), helper::clamp<int>(aux.y, 0, 7)).lock()->has_piece() ) {
                     
                     // we check if the piece is of similar color, or if our piece is a pawn, because a pawn cannot take the 
                     // piece in front of it.
-                    if ( color == get_square(clamp<int>(aux.x, 0, 7), clamp<int>(aux.y, 0, 7)).lock()->get_piece().lock()->tell_color() || piece_id == PAWN) {
+                    if ( color == get_square( helper::clamp<int>(aux.x, 0, 7), helper::clamp<int>(aux.y, 0, 7) ).lock()->get_piece().lock()->tell_color() || piece_id == PAWN) {
                         directions_cannot_go.push_back( vector );
                      }
                     
@@ -518,7 +524,7 @@ class Board
                 
                 
                 for ( coordinates a_vector : directions_cannot_go ) {
-                    if ( same_direction(a_vector, vector) )  {
+                    if ( helper::same_direction(a_vector, vector) )  {
                         is_same_direction = true;
                         break;
                     }
@@ -569,7 +575,7 @@ class Board
             for ( coordinates& basic : basic_moves ) {
                 aux = aux0 + basic;
 
-                a_square = get_square(clamp<int>(aux.x, 0, 7), clamp<int>(aux.y, 0, 7)).lock();
+                a_square = get_square( helper::clamp<int>(aux.x, 0, 7), helper::clamp<int>(aux.y, 0, 7) ).lock();
 
                 if ( a_square->has_piece() ) {
                     break;
@@ -584,7 +590,7 @@ class Board
             for ( coordinates& attack : attacking_moves) {
                 aux = aux0 + attack;
 
-                attacked_square = get_square(clamp<int>(aux.x, 0, 7), clamp<int>(aux.y, 0, 7)).lock();
+                attacked_square = get_square( helper::clamp<int>(aux.x, 0, 7), helper::clamp<int>(aux.y, 0, 7) ).lock();
 
                 if ( attacked_square->has_piece() ) {
                     if ( color != attacked_square->get_piece().lock()->tell_color()) {

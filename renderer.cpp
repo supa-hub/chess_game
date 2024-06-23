@@ -35,8 +35,8 @@ inline void clear_screen(unsigned int color)
 
 inline void draw_filled_circle(int x0, int y0, uint32_t color)
 {
-    x0 = clamp<int>(x0, 0, render_state.width);
-    y0 = clamp<int>(y0, 0, render_state.height);
+    x0 = helper::clamp<int>(x0, 0, render_state.width);
+    y0 = helper::clamp<int>(y0, 0, render_state.height);
 }
 
 /*
@@ -52,10 +52,10 @@ inline void draw_filled_rect(int x0, int y0, int x1, int y1, uint32_t color)
 {
     
     //unsigned int* pixel = (unsigned int*)render_state.memory;
-    x0 = clamp<int>(x0, 0, render_state.width);
-    x1 = clamp<int>(x1, 0, render_state.width);
-    y0 = clamp<int>(y0, 0, render_state.height);
-    y1 = clamp<int>(y1, 0, render_state.height);
+    x0 = helper::clamp<int>(x0, 0, render_state.width);
+    x1 = helper::clamp<int>(x1, 0, render_state.width);
+    y0 = helper::clamp<int>(y0, 0, render_state.height);
+    y1 = helper::clamp<int>(y1, 0, render_state.height);
     for ( int y = y0; y < y1; y++ ) {
         //unsigned int* pixel = (unsigned int*)render_state.memory + x0 + y*render_state.width;
         unsigned int* pixel = static_cast<unsigned int*>(render_state.memory) + x0 + y*render_state.width;
@@ -243,7 +243,7 @@ inline void render_image(const HANDLE image, const int32_t& x, const int32_t& y,
 
     uint32_t count = 0;
 
-    RGB_t rgb{};
+    helper::RGB rgb{};
 
 
     if ( image_data == NULL ) return;
@@ -350,7 +350,7 @@ inline rendered_picture render_image(HANDLE image, bool invert = false)
 
     uint32_t count = 0;
 
-    RGB_t rgb{};
+    helper::RGB rgb{};
     
 
 
@@ -462,7 +462,7 @@ struct
  this code was part of the main function that ran the program,
  but I removed it and made it its own function for simplicity.
 */
-inline void draw_pieces(std::weak_ptr<Board> board_ptr)
+inline void draw_pieces(const std::weak_ptr<Board> board_ptr)
 {
     std::weak_ptr<Square> a_square = std::weak_ptr<Square>();
 
