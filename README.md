@@ -8,7 +8,7 @@ Most of the frontend code is self-made. <br />
 
 ## Compile method
 By running the following command in cmd, you can compile the code into a working executable: <br />
-### g++ gui.cpp -lgdi32 -municode -O2 -o gui.exe
+### g++ gui.cpp -lgdi32 -municode -std=c++17 -O2 -o gui.exe
 
 
 ## Compatibility
@@ -24,10 +24,10 @@ NOTE: because the code uses the windows.h header, it is not compatible with Maco
 
 
 ## benchmark
-fps: 1500 - 8000  (depends on how many objects are drawn and the size of the window) <br />
+fps: 1500 - 10000  (depends on how many objects are drawn and the size of the window) <br />
 cpu load: 11% - 12% <br />
 
-NOTE: currently there is no fps cap, so the program will use one cpu core at 100%. In future updates there will be a fps cap added.
+NOTE: currently there is no fps cap, so the program will attempt to use one cpu core at 100%. In future updates there will be a fps cap added.
 
 
 

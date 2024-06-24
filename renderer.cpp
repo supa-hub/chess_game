@@ -423,7 +423,7 @@ inline rendered_picture render_image(HANDLE image, bool invert = false)
     picture.height = image_height;
     picture.begin = bytes;
 
-
+    
     return picture;
 }
 

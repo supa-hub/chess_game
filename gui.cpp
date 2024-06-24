@@ -94,7 +94,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 {
 
     LRESULT result = 0;
-    HDC hdc = GetDC(hwnd); // create a device context to use StretchDIBits()
+    //HDC hdc = GetDC(hwnd); // create a device context to use StretchDIBits()
     
 
     switch (uMsg) {
@@ -103,6 +103,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
             PostQuitMessage(0);
             KillTimer(hwnd, IDT_TIMER1);
+            KillTimer(hwnd, IDT_TIMER2);
             running = false;
         } break;
 
@@ -122,6 +123,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                     break;
                 }
 
+                /*
                 // this will trigger for every frame in a framerate
                 case IDT_TIMER2: {
                     StretchDIBits(
@@ -139,23 +141,13 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                         DIB_RGB_COLORS, 
                         SRCCOPY);
 
-
-                    BitBlt(
-                        hdc,
-                        0, 
-                        0, 
-                        render_state.width,
-                        render_state.height, 
-                        hdc,
-                        0, 
-                        0, 
-                        SRCCOPY
-                    );
+                        count++;
 
 
 
                     break;
                 }
+                */
             }
 
         } break;
@@ -174,22 +166,6 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                     draw_pieces(game_object.current());
                     display_all_text(600, 0, hwnd);
 
-                    /*
-                    StretchDIBits(
-                        hdc, 
-                        0, 
-                        0, 
-                        render_state.width,
-                        render_state.height, 
-                        0, 
-                        0, 
-                        render_state.width,
-                        render_state.height,  
-                        render_state.memory, 
-                        &render_state.bitmap_info, 
-                        DIB_RGB_COLORS, 
-                        SRCCOPY);
-                    */
                     
 
                     //display_all_text(600, 0, hwnd);
@@ -208,22 +184,8 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                     draw_pieces(game_object.current());
                     display_all_text(600, 0, hwnd);
 
-                    /*
-                    StretchDIBits(
-                        hdc, 
-                        0, 
-                        0, 
-                        render_state.width,
-                        render_state.height, 
-                        0, 
-                        0, 
-                        render_state.width,
-                        render_state.height,  
-                        render_state.memory, 
-                        &render_state.bitmap_info, 
-                        DIB_RGB_COLORS, 
-                        SRCCOPY);
-                    */
+
+                    
                     
                     //display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd, 1);
                     break;
@@ -261,7 +223,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd, 1);
             display_button("reset_game", render_state.width + text_field.width, a_button.height+10, hwnd, 2);
 
-            /*
+            
             StretchDIBits(
                 hdc, 
                 0, 
@@ -276,7 +238,8 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                 &render_state.bitmap_info, 
                 DIB_RGB_COLORS, 
                 SRCCOPY);
-            */
+            
+            
 
             
         } break;
@@ -289,7 +252,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         }
     }
 
-    ReleaseDC(hwnd, hdc);
+    //ReleaseDC(hwnd, hdc);
     return result;
 }
 
@@ -380,12 +343,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             (TIMERPROC) NULL);
     
 
-    
+    /*
     // a timer to set the framerate
     SetTimer(window,             // handle to main window 
         IDT_TIMER2,          // timer identifier 
-        1,                // 1-millisecond interval 
+        10,                // 20-millisecond interval 
         (TIMERPROC) NULL);
+    */
     
     
     
@@ -395,7 +359,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     draw_pieces(game_object.current());
 
     display_all_text(600, 0, window);
-    
+    /*
     StretchDIBits(
         hdc, 
         0, 
@@ -410,6 +374,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         &render_state.bitmap_info, 
         DIB_RGB_COLORS, 
         SRCCOPY);
+    */
 
     while (running) {
 
@@ -419,7 +384,23 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             input.buttons[i].changed = false;
         }
 
-        
+        // we show the new image onto the window only when we've done 10 calls to the image rendering functions
+        if ( count % 10 == 0 ) {
+            StretchDIBits(
+                hdc, 
+                0, 
+                0, 
+                render_state.width,
+                render_state.height, 
+                0, 
+                0, 
+                render_state.width,
+                render_state.height,  
+                render_state.memory, 
+                &render_state.bitmap_info, 
+                DIB_RGB_COLORS, 
+                SRCCOPY);
+        }
         
 
         while (PeekMessage(&message, window, 0, 0, PM_REMOVE)) {
@@ -542,6 +523,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                                     render_state.height
                                 );
 
+
+
                     
                 } break;
                 
@@ -571,6 +554,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 
 
-
+    ReleaseDC(window, hdc);
+    
     return 0;
 }
