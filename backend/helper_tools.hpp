@@ -43,7 +43,7 @@ enum color_id
 namespace helper
 {
 
-static std::array<std::string, 8> chess_letters = {"a", "b", "c", "d", "e", "f", "g"};
+static std::array<std::string, 8> chess_letters = {"a", "b", "c", "d", "e", "f", "g", "h"};
 
 template<typename T>
 struct coordinates 
@@ -53,17 +53,13 @@ struct coordinates
     
 
     //add a constructor for std::make_unique. Modified parameter names for clarity
-    coordinates( T x1 = 0, T y1 = 0) noexcept 
-    {
-        x = static_cast<int64_t>(x1);
-        y = static_cast<int64_t>(y1);
-    } 
+    coordinates( T x1 = 0, T y1 = 0) noexcept : x( static_cast<int64_t>(x1) ), y( static_cast<int64_t>(y1) ) { } 
 
 
-    coordinates(const coordinates& a) noexcept : x(a.x), y(a.y) {}
+    coordinates(const coordinates& a) noexcept : x(a.x), y(a.y) { }
 
     // we create some basic operations inside the struct
-    inline coordinates operator + (coordinates a)
+    inline coordinates operator + (coordinates a) noexcept
     {
         return { x+a.x, y+a.y };
     }
@@ -111,11 +107,6 @@ struct coordinates
         if ( y != 0 ) y = y + pow(-1, 1 + (y > 0));
     }
 
-    /*
-    inline bool opetator > (coordinates a)
-    {
-        return 
-    }*/
 
 
 };

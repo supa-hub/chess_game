@@ -59,7 +59,7 @@ class Game
         }
 
         // Delete a board which game has ended and remove it from our std::vector.
-        bool end_game( size_t game_index ) noexcept
+        bool end_game( const size_t& game_index ) noexcept
         {   
             
             if ( game_index < active_games_count() && game_index >= 0 ) {
@@ -78,7 +78,7 @@ class Game
         }
         
         // Set which board we are modifying from our array of Boards ( more specifically std::vector of std::shared_ptr's ).
-        bool set_current( size_t& game_index ) noexcept
+        bool set_current( const size_t& game_index ) noexcept
         {   
             if (  all_games.empty() ) return false;
 

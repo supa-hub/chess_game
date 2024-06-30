@@ -422,10 +422,10 @@ class Board
 
         }
 
-        /*
-         Checks whether the square of the given helper::coordinates<int64_t> contains a chess piece.
-         The method returns true, if it contains a piece, and false if the square is empty.
-        */
+        /**
+         * @brief Checks whether the square of the given helper::coordinates<int64_t> contains a chess piece.
+         * The method returns true, if it contains a piece, and false if the square is empty (or if coords are out of bounds).
+         */
         bool has_piece( const helper::coordinates<int64_t>& a ) noexcept
         {   
             if ( a.x >= 0 && a.x < 7 && a.y >= 0 && a.y < 7 ) {
@@ -438,6 +438,12 @@ class Board
             
         }
 
+        /**
+         * @brief Validates the different squares in the given range to check whether the piece can move to them
+         * @param current the current position of our piece
+         * @param a_piece the given piece
+         * @return std::vector< helper::coordinates<int64_t> > works as an array of vectors, whcih are applied to the pieces current position
+         */
         std::vector< helper::coordinates<int64_t> > find_possible_tiles_to_move_to(const helper::coordinates<int64_t>& current, sharedPiecePtr a_piece) noexcept
         {   
             if ( !a_piece ) return std::vector< helper::coordinates<int64_t> >();
@@ -469,13 +475,14 @@ class Board
                 // if the move is not out of bounds, we add it.
                 if ( aux.x < 0 || aux.x > 7 || aux.y < 0 || aux.y > 7 ) {
                     directions_cannot_go.push_back( vector );
+                    continue; // this ensures that we skip the parts from below so we dont have to use helper::clamp
                 }
 
 
                 // because the king cannot move to a tile that is attacked, we have to do this check
                 // we also use clamp in these places to protect against segfault.
-                if ( piece_id == KING*pow(10, color_id) && get_square( helper::clamp<int>(aux.x, 0, 7), helper::clamp<int>(aux.y, 0, 7)).lock()->attacked() ) {
-                    for ( aString a_color : get_square( helper::clamp<int>(aux.x, 0, 7), helper::clamp<int>(aux.y, 0, 7)).lock()->attacking_colors()) {
+                if ( piece_id == KING*pow(10, color_id) && get_square( aux.x, aux.y).lock()->attacked() ) {
+                    for ( aString a_color : get_square( aux.x, aux.y).lock()->attacking_colors()) {
                         if ( color != a_color) {
                             directions_cannot_go.push_back( vector );
                             break;
@@ -486,11 +493,11 @@ class Board
 
 
                 // check if a square has a piece, so we cannot go to the next square behind it.
-                if ( get_square( helper::clamp<int>(aux.x, 0, 7), helper::clamp<int>(aux.y, 0, 7)).lock()->has_piece() ) {
+                if ( get_square( aux.x, aux.y).lock()->has_piece() ) {
                     
                     // we check if the piece is of similar color, or if our piece is a pawn, because a pawn cannot take the 
                     // piece in front of it.
-                    if ( color == get_square( helper::clamp<int>(aux.x, 0, 7), helper::clamp<int>(aux.y, 0, 7) ).lock()->get_piece().lock()->tell_color() || piece_id == PAWN) {
+                    if ( color == get_square( aux.x, aux.y ).lock()->get_piece().lock()->tell_color() || piece_id == PAWN) {
                         directions_cannot_go.push_back( vector );
                      }
                     
@@ -524,7 +531,6 @@ class Board
             }
 
 
-            
             return can_go;
         }
 
