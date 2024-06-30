@@ -94,7 +94,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 {
 
     LRESULT result = 0;
-    //HDC hdc = GetDC(hwnd); // create a device context to use StretchDIBits()
+    HDC hdc = GetDC(hwnd); // create a device context to use StretchDIBits()
     
 
     switch (uMsg) {
@@ -252,7 +252,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         }
     }
 
-    //ReleaseDC(hwnd, hdc);
+    ReleaseDC(hwnd, hdc);
     return result;
 }
 
@@ -269,17 +269,17 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     std::weak_ptr<Square> clicked_square = std::weak_ptr<Square>();
 
     std::vector< coordinate_ptr > chosen_piece_moves = std::vector< coordinate_ptr >();
-
-    coordinates square_pos;
-    coordinates move_vec; // well use this to check if the piece can move to a new location
+    
+    helper::coordinates<int64_t> square_pos;
+    helper::coordinates<int64_t> move_vec; // well use this to check if the piece can move to a new location
     sharedPiecePtr clicked_piece;
 
-    std::vector<coordinates> can_go; // Stores the possible moves a piece can make.
+    std::vector<helper::coordinates<int64_t>> can_go; // Stores the possible moves a piece can make.
 
     
-    coordinates mouse_click;
+    helper::coordinates<int64_t> mouse_click;
 
-    coordinates old_clicked_square;
+    helper::coordinates<int64_t> old_clicked_square;
 
     std::string new_text;
 
@@ -319,7 +319,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
     if (window == NULL) {
         return 0;
     }
-
 
     
 
@@ -449,7 +448,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                     mouse_click.x = p.x - rect.left;
                     mouse_click.y = p.y - rect.top;
 
-                    // we do this calculation so the mouse coordinates start 
+                    // we do this calculation so the mouse helper::coordinates<int64_t> start 
                     // from the bottom left corner
                     mouse_click.y = render_state.height - mouse_click.y;
 
@@ -501,7 +500,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                     }
 
                     if ( clicked_square.lock()->get_piece().expired() ) {
-                        can_go = std::vector<coordinates>{};
+                        can_go = std::vector< helper::coordinates<int64_t> >{};
                     }
 
                     else {

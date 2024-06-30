@@ -10,8 +10,7 @@
 
 // simplify type declarations
 typedef std::string aString;
-
-typedef std::unique_ptr< helper::coordinates  > coordinate_ptr;
+typedef std::unique_ptr< helper::coordinates<int64_t>  > coordinate_ptr;
 
 
 // because our enums are unique, there wont be any namespace errors when doing this
@@ -113,17 +112,17 @@ class Pawn : public virtual Piece
             // We add all the pawn moves as pointers.
             // I use push_back() instead of adding the values in initialisation to support older C++ versions.
             if ( color_id == WHITE ) {
-                this->moves.push_back( std::make_unique< helper::coordinates >(0, 2) );
-                this->moves.push_back( std::make_unique< helper::coordinates >(0, 1) );
-                this->attacking_moves.push_back( std::make_unique< helper::coordinates >(1, 1) );
-                this->attacking_moves.push_back( std::make_unique< helper::coordinates >(-1, 1) );
+                this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(0, 2) );
+                this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(0, 1) );
+                this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(1, 1) );
+                this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(-1, 1) );
             }
 
             else if ( color_id == BLACK ) {
-                this->moves.push_back( std::make_unique< helper::coordinates >(0, -2) );
-                this->moves.push_back( std::make_unique< helper::coordinates >(0, -1) );
-                this->attacking_moves.push_back( std::make_unique< helper::coordinates >(1, -1) );
-                this->attacking_moves.push_back( std::make_unique< helper::coordinates >(-1, -1) );
+                this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(0, -2) );
+                this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(0, -1) );
+                this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(1, -1) );
+                this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(-1, -1) );
             }
             
             
@@ -161,14 +160,14 @@ class Rook : public virtual Piece
             for ( int i = -7; i < 8; i++ ) {
                 if ( i == 0 ) { continue; }
 
-                this->moves.push_back( std::make_unique< helper::coordinates >(i, 0) );
-                this->attacking_moves.push_back( std::make_unique< helper::coordinates >(i, 0) );
+                this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(i, 0) );
+                this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(i, 0) );
             }
             for ( int j = -7; j < 8; j++ ) {
                 if ( j == 0 ) { continue; }
 
-                this->moves.push_back( std::make_unique< helper::coordinates >(0, j) );
-                this->attacking_moves.push_back( std::make_unique< helper::coordinates >(0, j) );
+                this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(0, j) );
+                this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(0, j) );
             }
             return;
         }
@@ -206,17 +205,17 @@ class Bishop : public virtual Piece
             for ( int i = -7; i < 8; i++ ) {
                 if ( i == 0 ) { continue; }
 
-                this->moves.push_back( std::make_unique< helper::coordinates >(i, i) );
-                this->attacking_moves.push_back( std::make_unique< helper::coordinates >(i, i) );
+                this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(i, i) );
+                this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(i, i) );
 
-                //this->moves.push_back( std::make_unique< helper::coordinates >(-i, i) );
-                //this->attacking_moves.push_back( std::make_unique< helper::coordinates >(-i, i) );
+                //this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(-i, i) );
+                //this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(-i, i) );
 
-                this->moves.push_back( std::make_unique< helper::coordinates >(i, -i) );
-                this->attacking_moves.push_back( std::make_unique< helper::coordinates >(i, -i) );
+                this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(i, -i) );
+                this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(i, -i) );
 
-                //this->moves.push_back( std::make_unique< helper::coordinates >(-i, -i) );
-                //this->attacking_moves.push_back( std::make_unique< helper::coordinates >(-i, -i) );
+                //this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(-i, -i) );
+                //this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(-i, -i) );
             }
 
             return;
@@ -254,25 +253,25 @@ class Knight : public virtual Piece
         {
             // we add all the moves as pointers
             // I use push_back() instead of adding the values in initialisation to support older C++ versions.
-            this->moves.push_back( std::make_unique< helper::coordinates >(1, 2) );
-            this->moves.push_back( std::make_unique< helper::coordinates >(2, 1) );
-            this->attacking_moves.push_back( std::make_unique< helper::coordinates >(1, 2) );
-            this->attacking_moves.push_back( std::make_unique< helper::coordinates >(2, 1) );
+            this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(1, 2) );
+            this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(2, 1) );
+            this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(1, 2) );
+            this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(2, 1) );
 
-            this->moves.push_back( std::make_unique< helper::coordinates >(1, -2) );
-            this->moves.push_back( std::make_unique< helper::coordinates >(2, -1) );
-            this->attacking_moves.push_back( std::make_unique< helper::coordinates >(1, -2) );
-            this->attacking_moves.push_back( std::make_unique< helper::coordinates >(2, -1) );
+            this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(1, -2) );
+            this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(2, -1) );
+            this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(1, -2) );
+            this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(2, -1) );
 
-            this->moves.push_back( std::make_unique< helper::coordinates >(-1, -2) );
-            this->moves.push_back( std::make_unique< helper::coordinates >(-2, -1) );
-            this->attacking_moves.push_back( std::make_unique< helper::coordinates >(-1, -2) );
-            this->attacking_moves.push_back( std::make_unique< helper::coordinates >(-2, -1) );
+            this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(-1, -2) );
+            this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(-2, -1) );
+            this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(-1, -2) );
+            this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(-2, -1) );
 
-            this->moves.push_back( std::make_unique< helper::coordinates >(-1, 2) );
-            this->moves.push_back( std::make_unique< helper::coordinates >(-2, 1) );
-            this->attacking_moves.push_back( std::make_unique< helper::coordinates >(-1, 2) );
-            this->attacking_moves.push_back( std::make_unique< helper::coordinates >(-2, 1) );
+            this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(-1, 2) );
+            this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(-2, 1) );
+            this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(-1, 2) );
+            this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(-2, 1) );
             return;
         }
 };
@@ -357,7 +356,7 @@ class King : public virtual Piece
                 for ( int j=-1; j < 2; j++){
                     if ( i == 0  && j == 0 ) { continue; }
 
-                    this->moves.push_back( std::make_unique< helper::coordinates >(i, j) );
+                    this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(i, j) );
                 }
             }
         }

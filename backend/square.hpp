@@ -19,7 +19,7 @@ class Square
 {
     private:
         aString name;
-        helper::coordinates position;
+        helper::coordinates<int64_t> position;
         int id = 0;
         bool under_attack = false;
         std::vector< std::string > colors_attacking;
@@ -73,8 +73,8 @@ class Square
         // we remove a piece from the square
         sharedPiecePtr remove_piece() { return std::move(this->container); }
 
-        // return the squares coordinates
-        helper::coordinates coordinates()  { return this->position; }
+        // return the squares helper::coordinates<int64_t>
+        helper::coordinates<int64_t> coordinates()  { return this->position; }
 
         // basically check if there's a piece that can move to this square
         bool attacked() { return this->under_attack; }
@@ -119,7 +119,7 @@ class Square
             return colors_attacking;
         }
 
-        // check whether 2 given Squares have the same coordinates,
+        // check whether 2 given Squares have the same helper::coordinates<int64_t>,
         // if they have, then this operator considers them the same Square
         inline bool operator == ( Square a_square )
         {

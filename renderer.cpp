@@ -94,7 +94,7 @@ inline void draw_rect(int& x, int& y, int& width, int& height, uint32_t color)
 
 
 // this will contain the position of the square that will be colored red
-static coordinates redSquare;
+static helper::coordinates<int64_t> redSquare;
 
 
 /*
@@ -480,7 +480,7 @@ inline void draw_pieces(const std::weak_ptr<Board> board_ptr)
 
             y1 = y*(render_state.height/8);
 
-            a_square = ((board_ptr.lock())->get_square( coordinates{x, y}));
+            a_square = ((board_ptr.lock())->get_square( helper::coordinates<int64_t>{x, y}));
             std::weak_ptr<Piece> a_piece = (a_square.lock())->get_piece();
 
             if ( !(a_piece.expired()) ) {
@@ -579,26 +579,26 @@ inline void drawRedSquare(int32_t x, int32_t y)
 
 
 // this method renders all the green squares where the piece can move
-inline void drawPossibleMoves( const std::vector< coordinates >& moves, const coordinates& current, int32_t screen_width, int32_t screen_height)
+inline void drawPossibleMoves( const std::vector< helper::coordinates<int64_t> >& moves, const helper::coordinates<int64_t>& current, int32_t screen_width, int32_t screen_height)
 {
 
 
     // base values
-    coordinates aux = current;
+    helper::coordinates<int64_t> aux = current;
 
     uint32_t square_width = screen_width/8;
     uint32_t square_height = screen_height/8;
 
-    std::vector<coordinates> directions_cannot_go;
+    std::vector<helper::coordinates<int64_t>> directions_cannot_go;
 
     
-    coordinates aux0 = square_to_pos(current, square_width*8, square_height*8, false);
+    helper::coordinates<int64_t> aux0 = square_to_pos(current, square_width*8, square_height*8, false);
 
 
 
     //render_image(&pieces.green_ball, aux.x, aux.y);
 
-    for ( const coordinates& a_move : moves ) {
+    for ( const helper::coordinates<int64_t>& a_move : moves ) {
         aux = aux0 + square_to_pos(a_move, square_width*8, square_height*8, false);
 
 
@@ -611,21 +611,21 @@ inline void drawPossibleMoves( const std::vector< coordinates >& moves, const co
 
 
 
-inline void drawPossibleMoves1( const std::vector< coordinates >& moves, const coordinates& current, int32_t screen_width, int32_t screen_height)
+inline void drawPossibleMoves1( const std::vector< helper::coordinates<int64_t> >& moves, const helper::coordinates<int64_t>& current, int32_t screen_width, int32_t screen_height)
 {
 
-    coordinates aux = current;
+    helper::coordinates<int64_t> aux = current;
 
     uint32_t square_width = screen_width/8;
     uint32_t square_height = screen_height/8;
 
-    std::vector<coordinates> directions_cannot_go;
+    std::vector<helper::coordinates<int64_t>> directions_cannot_go;
 
     // base values
-    coordinates aux0 = square_to_pos(current, square_width*8, square_height*8, false);
+    helper::coordinates<int64_t> aux0 = square_to_pos(current, square_width*8, square_height*8, false);
 
 
-    for ( const coordinates& a_move : moves ) {
+    for ( const helper::coordinates<int64_t>& a_move : moves ) {
         aux = aux0 + square_to_pos(a_move, square_width*8, square_height*8, false);
 
         //rendered_picture aa = rendered_images.greenBall;
@@ -637,18 +637,18 @@ inline void drawPossibleMoves1( const std::vector< coordinates >& moves, const c
 
 
 
-inline void drawPossibleMoves2( const std::vector< coordinate_ptr >& moves, const coordinates& current, int32_t screen_width, int32_t screen_height)
+inline void drawPossibleMoves2( const std::vector< coordinate_ptr >& moves, const helper::coordinates<int64_t>& current, int32_t screen_width, int32_t screen_height)
 {
 
-    coordinates aux = current;
+    helper::coordinates<int64_t> aux = current;
 
     uint32_t square_width = screen_width/8;
     uint32_t square_height = screen_height/8;
 
-    std::vector<coordinates> directions_cannot_go;
+    std::vector<helper::coordinates<int64_t>> directions_cannot_go;
 
     // base values
-    coordinates aux0 = square_to_pos(current, square_width*8, square_height*8, false);
+    helper::coordinates<int64_t> aux0 = square_to_pos(current, square_width*8, square_height*8, false);
 
 
     for ( const coordinate_ptr& a_move : moves ) {

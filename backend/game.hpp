@@ -12,17 +12,24 @@
 #include "helper_tools.hpp"
 #include "board.hpp"
 
+
+using helper::coordinates;
+
 /*
  We'll use this class more in the future to manage multiple 
  windows with chess games at once.
 */
-
-
 class Game 
 {
     private:
         std::vector< std::shared_ptr<Board> > all_games;
         std::shared_ptr<Board> current_board; // this will contain the board that we are currently modifying. We need this variable because we can have multiple boards.
+
+        inline size_t captured_len( const int& color_id ) 
+        {
+            return current_board->captured_pieces( color_id ).size(); 
+        }
+
 
     public:
     
@@ -88,14 +95,18 @@ class Game
             return this->current_board;
         }
 
+        
+
 
         // This method abstracts away alot of the stuff that the code needs to do so the Board classes move_piece() method works smoothly and the gui can work normally,
         // otherwise this would have to be directly implemented in the gui code.
-        std::string move_piece( std::weak_ptr<Square> orig, std::weak_ptr<Square> target, helper::coordinates& click_coords, int32_t& width, int32_t& height ) noexcept
+        std::string move_piece( std::weak_ptr<Square> orig, std::weak_ptr<Square> target, helper::coordinates<int64_t>& click_coords, int32_t& width, int32_t& height ) noexcept
         {   
             std::shared_ptr<Piece> clicked_piece;
-            std::vector<coordinates> can_go;
-            coordinates move_vec; // well use this to check if the piece can move to a new location
+            std::vector< helper::coordinates<int64_t> > can_go;
+            helper::coordinates<int64_t> move_vec; // well use this to check if the piece can move to a new location
+            size_t original_len = 0; // we'll use this to check if we've captured a piece
+            
 
 
             // with this for loop we check if the square that we clicked on can be moved to by our piece,
@@ -103,7 +114,12 @@ class Game
             clicked_piece = orig.lock()->get_piece().lock();
             can_go = current_board->doesnt_get_in_check( clicked_piece, orig.lock()->coordinates() );
 
-            for (  const coordinates& a_move : can_go ) {
+
+            original_len = captured_len( clicked_piece->tell_color_id() );
+            
+
+
+            for (  const helper::coordinates<int64_t>& a_move : can_go ) {
 
                 // this is the difference between the clicked_square and a_square.
                 move_vec = current_board->convert_pos(click_coords.x, click_coords.y, width, height) - orig.lock()->coordinates();
@@ -112,6 +128,12 @@ class Game
                     //std::cout << clicked_square.lock()->get_piece().lock()->tell_name() << "\n"; 
 
                     if ( current_board->move_piece(orig, target ) ) {
+
+                        if ( original_len < captured_len( clicked_piece->tell_color_id() ) ) {
+                            return target.lock()->get_piece().lock()->tell_name() + "x" + target.lock()->coordinates().toChesstring() + "\n";
+                        }
+
+
                         return target.lock()->get_piece().lock()->tell_name() + target.lock()->coordinates().toChesstring() + "\n";
                     }
 

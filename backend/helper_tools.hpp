@@ -45,15 +45,19 @@ namespace helper
 
 static std::array<std::string, 8> chess_letters = {"a", "b", "c", "d", "e", "f", "g"};
 
-
+template<typename T>
 struct coordinates 
 {
-    int32_t x = 0;
-    int32_t y = 0;
+    int64_t x = 0;
+    int64_t y = 0;
     
-    
+
     //add a constructor for std::make_unique. Modified parameter names for clarity
-    coordinates(int32_t x1 = 0, int32_t y1 = 0) noexcept : x(x1), y(y1) {}
+    coordinates( T x1 = 0, T y1 = 0) noexcept 
+    {
+        x = static_cast<int64_t>(x1);
+        y = static_cast<int64_t>(y1);
+    } 
 
 
     coordinates(const coordinates& a) noexcept : x(a.x), y(a.y) {}
@@ -93,7 +97,7 @@ struct coordinates
     inline std::string toChesstring()
     {
         // We get the letter for the x axis and we also clamp the value so we dont get segfault.
-        return chess_letters[std::clamp<int32_t>(x, 0, 7)] + std::to_string(y+1);
+        return chess_letters[std::clamp<int64_t>(x, 0, 7)] + std::to_string(y+1);
     }   
 
     // increment is a method which only 
@@ -132,22 +136,22 @@ constexpr inline T clamp(const T& value, const T& smallest, const T& largest) no
 
 
 
-inline coordinates square_to_pos(const coordinates& coords, const int32_t& screen_width, const int32_t& screen_height, const bool& use_clamp)
+inline coordinates<int64_t> square_to_pos(const coordinates<int64_t>& coords, const int32_t& screen_width, const int32_t& screen_height, const bool& use_clamp)
 {
-    int32_t x = coords.x;
-    int32_t y = coords.y;
+    int64_t x = coords.x;
+    int64_t y = coords.y;
     
     if ( use_clamp ) {
-        x = clamp<int32_t>(x, 0, 7);
-        y = clamp<int32_t>(y, 0, 7);
+        x = clamp<int64_t>(x, 0, 7);
+        y = clamp<int64_t>(y, 0, 7);
     }
     
 
     int square_width = screen_width/8;
     int square_height = screen_height/8;
 
-    int x1 = x*square_width;
-    int y1 = y*square_height;
+    int64_t x1 = x*square_width;
+    int64_t y1 = y*square_height;
 
     return coordinates{x1, y1};
 }
@@ -267,7 +271,8 @@ class RGB
 
 
 // here we calculate if any of the given 2 vectors is a multiple of the other vector.
-inline bool same_direction(coordinates a, coordinates b)
+template<typename T>
+inline bool same_direction(coordinates<T> a, coordinates<T> b)
 {   
 
 

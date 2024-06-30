@@ -26,7 +26,7 @@ typedef std::string aString;
 typedef std::string_view constString;
 typedef std::weak_ptr<Piece> weakPiecePtr; 
 typedef std::shared_ptr<Piece> sharedPiecePtr;
-typedef std::unique_ptr< coordinates > coordinate_ptr;
+typedef std::unique_ptr< helper::coordinates<int64_t> > coordinate_ptr;
 
 
 
@@ -41,8 +41,6 @@ class Board
         // we keep count of each players score
         int score1 = 0;
         int score2 = 0;
-        std::vector<constString> captured_pieces_white; // the pieces that white has captured
-        std::vector<constString> captured_pieces_black; // the pieces that black has captured
 
         std::unordered_set<int32_t> already_used; // well use this for when we shuffle around pieces (it's a special gamemode)
 
@@ -51,17 +49,19 @@ class Board
 
         int32_t board_length = 0; // we will use this member in the future if we want to create a game with different board sizes
 
+        std::vector< std::vector<constString> > all_captured_pieces; // this will hold all the capured pieces names separated by their color_id
+
 
     public:
 
-        Board() : all_squares(8, std::vector< std::shared_ptr<Square>>(8) ), board_length(8)
+        Board() : all_squares(8, std::vector< std::shared_ptr<Square>>(8) ), board_length(8), all_captured_pieces(2)
         {
             this->create_board();
             this->already_used.reserve(32);
         }
 
         // for custom size board
-        Board(uint32_t size) : all_squares(size, std::vector< std::shared_ptr<Square>>(size) ), board_length(size)
+        Board(uint32_t size) : all_squares(size, std::vector< std::shared_ptr<Square>>(size) ), board_length(size), all_captured_pieces(2)
         {
             this->create_board();
             this->already_used.reserve(32);
@@ -114,6 +114,7 @@ class Board
         {
             std::shared_ptr<Square> a_square;
 
+
             // add all the pieces in their places onto the board
             // I dont use switch-statement to make the code clearer
             for ( int i = 0; i < 8; i++ ) {
@@ -122,12 +123,12 @@ class Board
                     a_square->remove_piece();
                 }
             }
+            
 
 
             // add all the pieces in their places onto the board
             for ( int i = 0; i < 8; i++ ) {
                 a_square = all_squares[i][1];
-                a_square->remove_piece();
                 
                 a_square->add_piece(std::make_shared<Pawn>("P", "w", WHITE));
             }
@@ -135,7 +136,6 @@ class Board
 
             for ( int i = 0; i < 8; i++ ) {
                 a_square = all_squares[i][6];
-                a_square->remove_piece();
                 
                 a_square->add_piece(std::make_shared<Pawn>("P", "b", BLACK));
             }
@@ -187,7 +187,7 @@ class Board
 
         // to simplify the add_shuffled_pieces() method, I created a new method that add a specific piece, 
         // otherwise I would manually have to do this to every piece
-        void add_specific_piece(sharedPiecePtr a_piece, const int32_t& amount, const coordinates& start_range, const coordinates& end_range)
+        void add_specific_piece(sharedPiecePtr a_piece, const int32_t& amount, const helper::coordinates<int32_t>& start_range, const helper::coordinates<int32_t>& end_range)
         {
             int32_t i = 0;
             int32_t chosen = 0;
@@ -234,12 +234,14 @@ class Board
             this->score1 = 0;
             this->score2 = 0;
 
-            captured_pieces_white.clear();
-            captured_pieces_black.clear();
 
             // we dont know how many pieces each player will capture, but we already reserve enough space for all the pieces
-            captured_pieces_white.reserve(16); 
-            captured_pieces_black.reserve(16);
+            // if black captures a white piece, then the white pieces name goes into blacks captured array
+            for ( std::vector<constString> a_color_arr : all_captured_pieces ) {
+                a_color_arr.clear();
+                a_color_arr.reserve(16);
+            }
+           
 
             int cycle = 0;
 
@@ -268,10 +270,11 @@ class Board
 
 
 
+
         // here are some basic class functions to return some values.
-        std::vector< std::shared_ptr<Square> > get_neighbors(std::vector< coordinate_ptr >& attacking_moves, coordinates& location)
+        std::vector< std::shared_ptr<Square> > get_neighbors(std::vector< coordinate_ptr >& attacking_moves, helper::coordinates<int64_t>& location)
         {
-            coordinates new_location;
+            helper::coordinates<int64_t> new_location;
             std::vector< std::shared_ptr<Square> > possible_locations;
 
             for ( coordinate_ptr& an_attack : attacking_moves ) {
@@ -289,7 +292,7 @@ class Board
         }
 
 
-        std::weak_ptr<Square> get_square( coordinates location )
+        std::weak_ptr<Square> get_square( helper::coordinates<int64_t> location )
         {
             std::weak_ptr<Square> square;
             square = all_squares[location.x][location.y];
@@ -305,9 +308,9 @@ class Board
             return all_squares[x][y];
         }
         
-        // converts window coordinates into a squares coordinates, these coordinates can then be used
+        // converts window helper::coordinates<int64_t> into a squares helper::coordinates<int64_t>, these helper::coordinates<int64_t> can then be used
         // to get the corresponding square
-        coordinates convert_pos( const int& x, const int& y, const int64_t& screen_width, const int64_t& screen_height, bool use_clamp = true ) noexcept
+        helper::coordinates<int64_t> convert_pos( const int& x, const int& y, const int64_t& screen_width, const int64_t& screen_height, bool use_clamp = true ) noexcept
         {
             int square_width = screen_width/8;
             int square_height = screen_height/8;
@@ -326,30 +329,12 @@ class Board
 
             
 
-            return coordinates{x1, y1};
+            return helper::coordinates<int64_t>{x1, y1};
         }
 
         
 
 
-        void move_piece( coordinate_ptr& direction )
-        {
-            int x = direction->x;
-            int y = direction->y;
-
-            // in the same line we remove a chess piece from the old square and add it in the new one
-            std::weak_ptr removed_piece = (this->all_squares)[x][y]->add_piece( (this->all_squares)[x][y]->remove_piece() );
-
-            if ( !(removed_piece.expired()) ) {
-                this->captured_pieces_white.push_back( (removed_piece.lock())->tell_name() );
-            }
-
-            update_attacked_squares();
-            
-            if ( is_check() ) { 
-                    std::cout << "king is in check" << "\n"; 
-                }
-        }
 
         // this method calls true, if the piece could be moved, and false if the piece couldn't be moved
         bool move_piece( const std::weak_ptr<Square> orig, const std::weak_ptr<Square> target ) noexcept
@@ -365,7 +350,7 @@ class Board
             sharedPiecePtr removed_piece = target.lock()->add_piece( orig.lock()->remove_piece() );
 
             if ( removed_piece ) {
-                this->captured_pieces_white.push_back( removed_piece->tell_name() );
+                all_captured_pieces[ target.lock()->get_piece().lock()->tell_color_id() ].push_back( removed_piece->tell_name() );
             }
 
 
@@ -428,7 +413,7 @@ class Board
 
 
                     if ( a_square_ptr.lock()->get_piece().lock()->tell_id() == KING*pow(10, a_square_ptr.lock()->get_piece().lock()->tell_color_id()) ) {
-                            king_pos.push_back( std::make_unique<coordinates>(a_square_ptr.lock()->coordinates()) );
+                            king_pos.push_back( std::make_unique< helper::coordinates<int64_t> >(a_square_ptr.lock()->coordinates()) );
                     }
                 }
             }
@@ -438,10 +423,10 @@ class Board
         }
 
         /*
-         Checks whether the square of the given coordinates contains a chess piece.
+         Checks whether the square of the given helper::coordinates<int64_t> contains a chess piece.
          The method returns true, if it contains a piece, and false if the square is empty.
         */
-        bool has_piece( const coordinates& a ) noexcept
+        bool has_piece( const helper::coordinates<int64_t>& a ) noexcept
         {   
             if ( a.x >= 0 && a.x < 7 && a.y >= 0 && a.y < 7 ) {
                 return all_squares[a.x][a.y]->has_piece();
@@ -453,9 +438,9 @@ class Board
             
         }
 
-        std::vector< coordinates > find_possible_tiles_to_move_to(const coordinates& current, sharedPiecePtr a_piece) noexcept
+        std::vector< helper::coordinates<int64_t> > find_possible_tiles_to_move_to(const helper::coordinates<int64_t>& current, sharedPiecePtr a_piece) noexcept
         {   
-            if ( !a_piece ) return std::vector< coordinates >();
+            if ( !a_piece ) return std::vector< helper::coordinates<int64_t> >();
 
             
             const std::vector< coordinate_ptr >& moves = a_piece->possible_moves();
@@ -464,13 +449,13 @@ class Board
             int32_t color_id = a_piece->tell_color_id();
 
 
-            coordinates aux0 = current;
-            coordinates aux;
+            helper::coordinates<int64_t> aux0 = current;
+            helper::coordinates<int64_t> aux;
             bool is_same_direction = false; // we'll use this to figure out if a piece is blocking the way.
-            coordinates vector;
+            helper::coordinates<int64_t> vector;
 
-            std::vector< coordinates > directions_cannot_go;
-            std::vector< coordinates > can_go;
+            std::vector< helper::coordinates<int64_t> > directions_cannot_go;
+            std::vector< helper::coordinates<int64_t> > can_go;
 
 
             if ( piece_id == PAWN*pow(10, color_id)) {
@@ -523,7 +508,7 @@ class Board
                 is_same_direction = false;
                 
                 
-                for ( coordinates a_vector : directions_cannot_go ) {
+                for ( helper::coordinates<int64_t> a_vector : directions_cannot_go ) {
                     if ( helper::same_direction(a_vector, vector) )  {
                         is_same_direction = true;
                         break;
@@ -546,33 +531,33 @@ class Board
 
         // we create an own distinct method for pawns moves because they have weird movement mechanics 
         // compared to other pieces.
-        std::vector< coordinates > pawn_moves(const coordinates& current, sharedPiecePtr a_piece) noexcept 
+        std::vector< helper::coordinates<int64_t> > pawn_moves(const helper::coordinates<int64_t>& current, sharedPiecePtr a_piece) noexcept 
         {
-            coordinates aux0 = current;
-            coordinates aux;
+            helper::coordinates<int64_t> aux0 = current;
+            helper::coordinates<int64_t> aux;
             constString color{ a_piece->tell_color() };
             int32_t color_id = a_piece->tell_color_id();
 
             std::shared_ptr<Square> a_square;
             std::shared_ptr<Square> attacked_square;
-            std::vector< coordinates > can_go;
+            std::vector< helper::coordinates<int64_t> > can_go;
 
-            std::vector<coordinates> basic_moves = { coordinates{0, 1}, coordinates{0, 2} };
+            std::vector<helper::coordinates<int64_t>> basic_moves = { helper::coordinates<int64_t>{0, 1}, helper::coordinates<int64_t>{0, 2} };
             
 
             // we also manually check for the 2 pawn moves that are only possible if theres a piece of opposite color.
-            std::vector<coordinates> attacking_moves = { coordinates{1, 1}, coordinates{-1, 1} };
+            std::vector<helper::coordinates<int64_t>> attacking_moves = { helper::coordinates<int64_t>{1, 1}, helper::coordinates<int64_t>{-1, 1} };
             
             if ( color_id == BLACK ) {
-                basic_moves = { coordinates{0, -1}, coordinates{0, -2} };
-                attacking_moves = { coordinates{1, -1}, coordinates{-1, -1} };
+                basic_moves = { helper::coordinates<int64_t>{0, -1}, helper::coordinates<int64_t>{0, -2} };
+                attacking_moves = { helper::coordinates<int64_t>{1, -1}, helper::coordinates<int64_t>{-1, -1} };
             }
 
 
             if ( a_piece->has_moved() ) basic_moves.pop_back();
 
             // we check for the normal pawn moves if they're possible.
-            for ( coordinates& basic : basic_moves ) {
+            for ( helper::coordinates<int64_t>& basic : basic_moves ) {
                 aux = aux0 + basic;
 
                 a_square = get_square( helper::clamp<int>(aux.x, 0, 7), helper::clamp<int>(aux.y, 0, 7) ).lock();
@@ -587,7 +572,7 @@ class Board
             }
 
 
-            for ( coordinates& attack : attacking_moves) {
+            for ( helper::coordinates<int64_t>& attack : attacking_moves) {
                 aux = aux0 + attack;
 
                 attacked_square = get_square( helper::clamp<int>(aux.x, 0, 7), helper::clamp<int>(aux.y, 0, 7) ).lock();
@@ -613,7 +598,7 @@ class Board
         void update_attacked_squares()
         {   
             Square a_square;
-            coordinates aux;
+            helper::coordinates<int64_t> aux;
 
             for ( int i = 0; i < 8; i++ ) {
                 for ( int j = 0; j < 8; j++ ) {
@@ -668,7 +653,7 @@ class Board
                     
 
                     // we remove the locations that the piece cannot move to.
-                    const std::vector<coordinates>& moves = find_possible_tiles_to_move_to( 
+                    const std::vector<helper::coordinates<int64_t>>& moves = find_possible_tiles_to_move_to( 
                                                                 a_square.coordinates(),
                                                                 a_piece
                                                                 );
@@ -676,7 +661,7 @@ class Board
                     
                     
 
-                    for ( const coordinates& move : moves ) {
+                    for ( const helper::coordinates<int64_t>& move : moves ) {
                         aux = a_square.coordinates();
                         aux = aux + move;
 
@@ -691,6 +676,11 @@ class Board
         }
 
 
+        // returns the names of captured pieces
+        std::vector<constString> captured_pieces( const int& color_id ) { 
+            return all_captured_pieces[ helper::clamp<int>( color_id, 0, all_captured_pieces.size()-1 ) ]; }
+
+
         // these  methods will tell us if the king is in check.
         bool is_check();
         constString is_checkmate();
@@ -702,7 +692,7 @@ class Board
 
         // This method will be the main way the code filters out the places the the piece cannot 
         // go to at that moment.
-        std::vector<coordinates> doesnt_get_in_check( weakPiecePtr a_piece, coordinates current);
+        std::vector<helper::coordinates<int64_t>> doesnt_get_in_check( weakPiecePtr a_piece, helper::coordinates<int64_t> current);
 
         // with this method we'll check if the king can castle
         bool king_castling();
@@ -724,7 +714,7 @@ bool Board::is_check()
     }
 
     /*
-     We check the coordinates where kings are located and check if 
+     We check the helper::coordinates<int64_t> where kings are located and check if 
      a piece of different color attacks it.
     */
     for ( coordinate_ptr& coords : king_coords ) {
@@ -759,7 +749,7 @@ bool Board::is_check(const constString& color_to_check)
     }
 
     /*
-     we check the coordinates where kings are located and check if 
+     we check the helper::coordinates<int64_t> where kings are located and check if 
      a piece of different color attacks it.
     */
     for ( coordinate_ptr& coords : king_coords ) {
@@ -877,11 +867,11 @@ this method loops through the pieces moves and checks if the king gets in check
 when the piece moves.
 This method only returns the moves that don't get the king in check.
 */
-std::vector<coordinates> Board::doesnt_get_in_check(weakPiecePtr a_piece, coordinates current_pos)
+std::vector<helper::coordinates<int64_t>> Board::doesnt_get_in_check(weakPiecePtr a_piece, helper::coordinates<int64_t> current_pos)
 {   
     
-    std::vector< coordinates > possible_moves;
-    std::vector< coordinates > filtered_moves; // these are the squares the the piece can move to.
+    std::vector< helper::coordinates<int64_t> > possible_moves;
+    std::vector< helper::coordinates<int64_t> > filtered_moves; // these are the squares the the piece can move to.
     sharedPiecePtr removed_piece;
     if ( a_piece.expired() ) return possible_moves;
 
@@ -891,8 +881,8 @@ std::vector<coordinates> Board::doesnt_get_in_check(weakPiecePtr a_piece, coordi
     // filter out the places that the piece cannot go to
     filtered_moves = find_possible_tiles_to_move_to(current_pos, a_piece.lock());
 
-    for ( const coordinates& vector : filtered_moves ) {
-        coordinates a_move = current_pos + vector;
+    for ( const helper::coordinates<int64_t>& vector : filtered_moves ) {
+        helper::coordinates<int64_t> a_move = current_pos + vector;
         removed_piece = get_square(a_move).lock()->get_piece().lock();
 
         base_move(get_square(current_pos), get_square(a_move));
