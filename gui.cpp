@@ -26,6 +26,7 @@ Copyright (C) 2024  Tomi Bilcu a.k.a supa-hub
 #include <algorithm>
 #include <deque>
 #include <string_view>
+#include <cstdlib>
 
 
 static bool running = true;
@@ -71,6 +72,7 @@ HBITMAP hBitmap = NULL;
 #include "render_button.hpp"
 #include "backend/board.hpp"
 #include "backend/game.hpp"
+#include "backend/helper_tools.hpp"
 
 using helper::coordinates;
 

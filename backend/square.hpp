@@ -84,7 +84,7 @@ class Square
         { 
             this->under_attack = a; 
             
-            // because the square is not attacked, we clear the vector that stores what colors are attacking it.
+            // because the square is not attacked, we clear the unordered_map that stores what colors are attacking it.
             if ( !a ) {
                 colors_attacking.clear();
             }
@@ -94,7 +94,9 @@ class Square
         void change_attacked_status(const std::string& a) noexcept
         { 
             this->under_attack = true;
-            colors_attacking.push_back(a); 
+
+           colors_attacking.push_back( a );
+           return;
         }
 
 

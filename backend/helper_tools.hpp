@@ -9,6 +9,7 @@
 #include <string>
 #include <array>
 
+// windows.h contains a RGB macro that we undefine
 #ifdef RGB
 #undef RGB
 #endif
@@ -34,7 +35,6 @@ enum color_id
     GREEN,
     BLUE,
 
-
     COLOR_COUNT
 };
 
@@ -53,34 +53,36 @@ struct coordinates
     
 
     //add a constructor for std::make_unique. Modified parameter names for clarity
-    coordinates( T x1 = 0, T y1 = 0) noexcept : x( static_cast<int64_t>(x1) ), y( static_cast<int64_t>(y1) ) { } 
+    coordinates( T x1 = 0, T y1 = 0 ) noexcept : x( static_cast<int64_t>(x1) ), y( static_cast<int64_t>(y1) ) { } 
 
 
-    coordinates(const coordinates& a) noexcept : x(a.x), y(a.y) { }
+    coordinates(const coordinates& a ) noexcept : x(a.x), y(a.y) { }
 
     // we create some basic operations inside the struct
-    inline coordinates operator + (coordinates a) noexcept
+    inline coordinates operator + ( const coordinates<T>& a ) noexcept
     {
         return { x+a.x, y+a.y };
     }
 
-    inline coordinates operator - (coordinates a)
+    inline coordinates operator - ( const coordinates<T>& a )
     {
         return { x-a.x, y-a.y };
     }
 
-    inline bool operator == (coordinates a)
+    
+    inline bool operator ==  ( const coordinates<T>& a )
     {
         return { x == a.x && y == a.y };
     }
 
-    inline bool operator != (coordinates a)
+
+    inline bool operator != ( const coordinates<T>& a )
     {
         return { x != a.x || y != a.y };
     }
 
 
-    inline coordinates operator * (int32_t a)
+    inline coordinates operator * ( const int32_t& a )
     {
         return { x*a, y*a };
     }
@@ -116,7 +118,7 @@ struct coordinates
 // we create a clamp function to only choose the value if its
 // in the accepted range
 template <typename T>
-constexpr inline T clamp(const T& value, const T& smallest, const T& largest) noexcept
+constexpr inline T clamp( const T& value, const T& smallest, const T& largest ) noexcept
 {
     return std::min(largest, std::max(value, smallest));
 }
@@ -124,27 +126,25 @@ constexpr inline T clamp(const T& value, const T& smallest, const T& largest) no
 
 
 
-
-
-
-inline coordinates<int64_t> square_to_pos(const coordinates<int64_t>& coords, const int32_t& screen_width, const int32_t& screen_height, const bool& use_clamp)
+template<typename T, typename D>
+inline coordinates<int64_t> square_to_pos( const coordinates<T>& coords, const D& screen_width, const D& screen_height, const bool& use_clamp )
 {
-    int64_t x = coords.x;
-    int64_t y = coords.y;
+    T x = coords.x;
+    T y = coords.y;
     
     if ( use_clamp ) {
-        x = clamp<int64_t>(x, 0, 7);
-        y = clamp<int64_t>(y, 0, 7);
+        x = clamp<T>(x, 0, 7);
+        y = clamp<T>(y, 0, 7);
     }
     
 
-    int square_width = screen_width/8;
-    int square_height = screen_height/8;
+    D square_width = screen_width/8;
+    D square_height = screen_height/8;
 
-    int64_t x1 = x*square_width;
-    int64_t y1 = y*square_height;
+    T x1 = x*square_width;
+    T y1 = y*square_height;
 
-    return coordinates{x1, y1};
+    return coordinates<T>{x1, y1};
 }
 
 
@@ -168,11 +168,11 @@ class RGB
 
 
         // define some constructors
-        constexpr RGB() noexcept { }
+        constexpr RGB( ) noexcept { }
 
-        constexpr RGB(uint32_t red, uint32_t green, uint32_t blue) noexcept : color( ( red << 16 ) + ( green << 8 ) + blue ) { } 
+        constexpr RGB( uint32_t red, uint32_t green, uint32_t blue ) noexcept : color( ( red << 16 ) + ( green << 8 ) + blue ) { } 
 
-        constexpr RGB(uint32_t hex) noexcept
+        constexpr RGB( const uint32_t& hex) noexcept
         { 
             color = hex;
         } 
@@ -200,7 +200,7 @@ class RGB
 
         // assign certain color values
         // assign the red value
-        inline bool red(uint32_t num) noexcept
+        inline bool red( uint32_t num ) noexcept
         {
             color = ( color & ~red_hex ) | ( ( num << 16 ) & red_hex );
 
@@ -208,7 +208,7 @@ class RGB
         }
 
         // assign the green value
-        inline bool green(uint32_t num) noexcept
+        inline bool green( uint32_t num ) noexcept
         {
             color = ( color & ~green_hex ) | ( ( num << 8 ) & green_hex );
 
@@ -216,7 +216,7 @@ class RGB
         }
 
         // assign the blue value
-        inline bool blue(uint32_t num) noexcept
+        inline bool blue( uint32_t num ) noexcept
         {
             color = ( color & ~blue_hex ) | ( num & blue_hex );
 
@@ -234,13 +234,13 @@ class RGB
             return { this->red() - color.red(), this->green() - color.green(), this->blue() - color.blue() };
         }
 
-        inline RGB operator = ( uint32_t num ) noexcept
+        inline RGB operator = ( const uint32_t& num ) noexcept
         {
             return { this->to_rgb(num) };
         }
 
 
-        inline RGB to_rgb( uint32_t hex ) noexcept
+        inline RGB to_rgb( const uint32_t& hex ) noexcept
         {
             return { color = hex };
         }
@@ -248,7 +248,7 @@ class RGB
 
 
         template<typename T>
-        inline bool operator < ( T value )
+        inline bool operator < ( const T& value )
         {
             return { this->get_int() < value };
         }

@@ -97,9 +97,17 @@ class Game
 
         
 
-
-        // This method abstracts away alot of the stuff that the code needs to do so the Board classes move_piece() method works smoothly and the gui can work normally,
-        // otherwise this would have to be directly implemented in the gui code.
+        /**
+         * @brief This method abstracts away alot of the stuff that the code needs to do so the Board classes move_piece() method works smoothly and the gui can work normally,
+         * otherwise this would have to be directly implemented in the gui code.
+         * 
+         * @param orig 
+         * @param target 
+         * @param click_coords 
+         * @param width 
+         * @param height 
+         * @return std::string 
+         */
         std::string move_piece( std::weak_ptr<Square> orig, std::weak_ptr<Square> target, helper::coordinates<int64_t>& click_coords, int32_t& width, int32_t& height ) noexcept
         {   
             std::shared_ptr<Piece> clicked_piece;
@@ -125,9 +133,18 @@ class Game
                 move_vec = current_board->convert_pos(click_coords.x, click_coords.y, width, height) - orig.lock()->coordinates();
 
                 if ( move_vec  == a_move ) {
-                    //std::cout << clicked_square.lock()->get_piece().lock()->tell_name() << "\n"; 
+                    
+                    // this if-statement is for castling
+                    if ( clicked_piece->tell_id() == KING*pow(10, clicked_piece->tell_color_id()) && 
+                        (a_move.x == 2 || a_move.x == -2)) {
+                            
+                            if ( current_board->king_rook_move( orig, target, a_move.x ) ) {
+                                return ( a_move.x == -2 ) ? "0-0-0\n" : "0-0\n";
+                            }
+                    }
 
-                    if ( current_board->move_piece(orig, target ) ) {
+
+                    else if ( current_board->move_piece(orig, target ) ) {
 
                         if ( original_len < captured_len( clicked_piece->tell_color_id() ) ) {
                             return target.lock()->get_piece().lock()->tell_name() + "x" + target.lock()->coordinates().toChesstring() + "\n";

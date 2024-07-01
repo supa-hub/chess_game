@@ -238,8 +238,7 @@ inline void render_image(const HANDLE image, const int32_t& x, const int32_t& y,
     // some rows have an additional pixel.
     int64_t remainder_of_row = bytes_per_scan_line % image_width; 
 
-    std::vector<uint32_t> bytes;
-    bytes.reserve(image_width * image_height);
+    std::vector<uint32_t> bytes(image_width * image_height);
 
     uint32_t count = 0;
 
@@ -345,8 +344,7 @@ inline rendered_picture render_image(HANDLE image, bool invert = false)
 
     //uint32_t bytes[(image_width * image_height)] = {0};
 
-    std::vector<uint32_t> bytes;
-    bytes.resize(image_width * image_height);
+    std::vector<uint32_t> bytes(image_width * image_height);
 
     uint32_t count = 0;
 

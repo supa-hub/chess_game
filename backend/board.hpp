@@ -300,7 +300,7 @@ class Board
             return all_squares[location.x][location.y];
         }
 
-        std::weak_ptr<Square> get_square( int x, int y )
+        std::weak_ptr<Square> get_square( const int64_t& x, const int64_t& y )
         {
             std::weak_ptr<Square> square;
             square = all_squares[x][y];
@@ -337,7 +337,7 @@ class Board
 
 
         // this method calls true, if the piece could be moved, and false if the piece couldn't be moved
-        bool move_piece( const std::weak_ptr<Square> orig, const std::weak_ptr<Square> target ) noexcept
+        bool move_piece( std::weak_ptr<Square> orig, std::weak_ptr<Square> target ) noexcept
         {
             if ( orig.expired() || target.expired() ) return false;
 
@@ -345,9 +345,12 @@ class Board
                 return false;
             }
 
+
             orig.lock()->get_piece().lock()->moved();
+
             // in the same line we remove a chess piece from the old square and add it in the new one.
             sharedPiecePtr removed_piece = target.lock()->add_piece( orig.lock()->remove_piece() );
+
 
             if ( removed_piece ) {
                 all_captured_pieces[ target.lock()->get_piece().lock()->tell_color_id() ].push_back( removed_piece->tell_name() );
@@ -373,6 +376,60 @@ class Board
             }
 
             return true;
+        }
+
+
+        /**
+         * @brief this is a special case of Board::move_piece in which the king and castle change
+         * places. This method trusts that the Board::find_possible_tiles_to_move already validated the castling
+         * and it doesnt to the check again.
+         */
+        bool king_rook_move( std::weak_ptr<Square> orig, std::weak_ptr<Square> target, int64_t direction ) 
+        {
+            if ( orig.expired() || target.expired() ) return false;
+
+            if ( this->player_turn != orig.lock()->get_piece().lock()->tell_color_id() ) {
+                return false;
+            }
+
+            sharedPiecePtr orig_piece = orig.lock()->get_piece().lock();
+            int32_t color_id = orig_piece->tell_color_id();
+
+            std::shared_ptr<Square> target_square; // the square that contains the rook that we'll move
+
+            if ( orig_piece->tell_id() != KING*pow(10, color_id ) ) {
+                return false;
+            }
+
+            if ( direction == 2 ) {
+                target_square = get_square( 7, orig.lock()->coordinates().y ).lock();
+            }
+
+            else if ( direction == -2 ) {
+                target_square = get_square( 0, orig.lock()->coordinates().y ).lock();
+            }
+
+
+            if ( !target_square ) {
+                return false;
+            }
+
+
+
+            orig.lock()->get_piece().lock()->moved();
+
+
+
+            sharedPiecePtr removed_piece = target.lock()->add_piece( orig.lock()->remove_piece() );
+            helper::coordinates<int64_t> king_coords = target.lock()->coordinates(); // the kings coords
+
+            // if the rook is at x = 7, well move it to king direction - 1, if its at x = 0, then to king_dir + 1
+            int64_t rook_dir = ( direction < 0 ) ? 1 : -1;
+
+            // now we move the rook
+            return move_piece( target_square, get_square( king_coords.x + rook_dir, king_coords.y ) );
+
+            //return true;
         }
 
 
@@ -442,7 +499,7 @@ class Board
          * @brief Validates the different squares in the given range to check whether the piece can move to them
          * @param current the current position of our piece
          * @param a_piece the given piece
-         * @return std::vector< helper::coordinates<int64_t> > works as an array of vectors, whcih are applied to the pieces current position
+         * @return std::vector< helper::coordinates<int64_t> > works as an array of vectors, which are applied to the pieces current position
          */
         std::vector< helper::coordinates<int64_t> > find_possible_tiles_to_move_to(const helper::coordinates<int64_t>& current, sharedPiecePtr a_piece) noexcept
         {   
@@ -459,6 +516,7 @@ class Board
             helper::coordinates<int64_t> aux;
             bool is_same_direction = false; // we'll use this to figure out if a piece is blocking the way.
             helper::coordinates<int64_t> vector;
+            std::vector < helper::coordinates<int64_t> > castling_moves;
 
             std::vector< helper::coordinates<int64_t> > directions_cannot_go;
             std::vector< helper::coordinates<int64_t> > can_go;
@@ -467,6 +525,13 @@ class Board
             if ( piece_id == PAWN*pow(10, color_id)) {
                 return pawn_moves(current, a_piece);
             }
+
+            
+            if ( piece_id == KING*pow(10, color_id) ) {
+                castling_moves = king_castling( current, a_piece );
+                can_go.insert( can_go.end(), castling_moves.begin(), castling_moves.end() );
+            }
+            
 
             for ( const coordinate_ptr& a_move : moves ) {
                 vector = *a_move;
@@ -481,19 +546,19 @@ class Board
 
                 // because the king cannot move to a tile that is attacked, we have to do this check
                 // we also use clamp in these places to protect against segfault.
-                if ( piece_id == KING*pow(10, color_id) && get_square( aux.x, aux.y).lock()->attacked() ) {
-                    for ( aString a_color : get_square( aux.x, aux.y).lock()->attacking_colors()) {
+                if ( piece_id == KING*pow(10, color_id) && get_square( aux.x, aux.y ).lock()->attacked() ) {
+                    for ( aString a_color : get_square( aux.x, aux.y ).lock()->attacking_colors() ) {
                         if ( color != a_color) {
                             directions_cannot_go.push_back( vector );
                             break;
                         }
                     }
                 }
+
                
 
-
                 // check if a square has a piece, so we cannot go to the next square behind it.
-                if ( get_square( aux.x, aux.y).lock()->has_piece() ) {
+                if ( get_square( aux.x, aux.y ).lock()->has_piece() ) {
                     
                     // we check if the piece is of similar color, or if our piece is a pawn, because a pawn cannot take the 
                     // piece in front of it.
@@ -509,19 +574,25 @@ class Board
                 }
             }
 
+
             for ( const coordinate_ptr& a_move : moves ) {
                 vector = *a_move;
                 aux = aux0 + vector;
                 is_same_direction = false;
                 
-                
+                // if the move is not out of bounds, we add it.
+                if ( aux.x < 0 || aux.x > 7 || aux.y < 0 || aux.y > 7 ) {
+                    continue; // this ensures that we skip the parts from below so we dont have to use helper::clamp
+                }
+
+
                 for ( helper::coordinates<int64_t> a_vector : directions_cannot_go ) {
                     if ( helper::same_direction(a_vector, vector) )  {
                         is_same_direction = true;
                         break;
                     }
-
                 }
+
 
 
                 if ( !is_same_direction ) {
@@ -535,8 +606,14 @@ class Board
         }
 
 
-        // we create an own distinct method for pawns moves because they have weird movement mechanics 
-        // compared to other pieces.
+        // 
+        /**
+         * @brief we create an own distinct method for pawns moves because they have weird movement mechanics 
+         * compared to other pieces.
+         * @param current the current position of our pawn
+         * @param a_piece a shared_ptr to our pawn to get some basic info
+         * @return std::vector< helper::coordinates<int64_t> > 
+         */
         std::vector< helper::coordinates<int64_t> > pawn_moves(const helper::coordinates<int64_t>& current, sharedPiecePtr a_piece) noexcept 
         {
             helper::coordinates<int64_t> aux0 = current;
@@ -631,7 +708,6 @@ class Board
                      can, we skip it.
                      The reason for this is that this method is used to check for check or checkmate.
                     */
-
                     if ( a_piece->tell_id() == KING*pow(10, a_piece->tell_color_id()) ) {
                             continue;
                     }
@@ -693,16 +769,17 @@ class Board
 
         // The below 2 overloads are almost the same as the original methods but they
         // look for check and ckeckmate for a specific color.
-        bool is_check(const constString& color_to_check);
-        constString is_checkmate(const constString& color_to_check);
+        bool is_check( const constString& color_to_check );
+        constString is_checkmate( const constString& color_to_check );
 
         // This method will be the main way the code filters out the places the the piece cannot 
         // go to at that moment.
-        std::vector<helper::coordinates<int64_t>> doesnt_get_in_check( weakPiecePtr a_piece, helper::coordinates<int64_t> current);
+        std::vector< helper::coordinates<int64_t> > doesnt_get_in_check( weakPiecePtr a_piece, helper::coordinates<int64_t> current);
 
+    private:
         // with this method we'll check if the king can castle
-        bool king_castling();
-        
+        inline std::vector< helper::coordinates<int64_t> > king_castling( helper::coordinates<int64_t> current, sharedPiecePtr a_piece );
+    
  
 };
 
@@ -868,12 +945,11 @@ constString Board::is_checkmate(const constString& color_to_check)
 
 
 
-/*
-this method loops through the pieces moves and checks if the king gets in check
-when the piece moves.
-This method only returns the moves that don't get the king in check.
+/** @brief this method loops through the pieces moves and checks if the king gets in check
+ * when the piece moves.
+ * This method only returns the moves that don't get the pieces king in check.
 */
-std::vector<helper::coordinates<int64_t>> Board::doesnt_get_in_check(weakPiecePtr a_piece, helper::coordinates<int64_t> current_pos)
+std::vector< helper::coordinates<int64_t> > Board::doesnt_get_in_check(weakPiecePtr a_piece, helper::coordinates<int64_t> current_pos)
 {   
     
     std::vector< helper::coordinates<int64_t> > possible_moves;
@@ -901,8 +977,13 @@ std::vector<helper::coordinates<int64_t>> Board::doesnt_get_in_check(weakPiecePt
 
         base_move(get_square(a_move), get_square(current_pos));
 
-        if (removed_piece) get_square(a_move).lock()->add_piece(removed_piece);
-
+        // because a removed piece doesnt retain his old position, 
+        // we cant use base_move or move_piece methods to add it back,
+        // we'll also call update_attacked_squared() after we've added the piece back.
+        if ( removed_piece ) { 
+            get_square(a_move).lock()->add_piece(removed_piece);
+            update_attacked_squares();
+        }
 
     }
 
@@ -913,9 +994,88 @@ std::vector<helper::coordinates<int64_t>> Board::doesnt_get_in_check(weakPiecePt
 
 
 
-bool Board::king_castling()
+inline std::vector< helper::coordinates<int64_t> > Board::king_castling( helper::coordinates<int64_t> current, sharedPiecePtr a_piece )
 {
-    return false;
+    if ( !a_piece ) return std::vector< helper::coordinates<int64_t> >();
+
+    if ( current.x < 0 || current.x > 7 || current.y < 0 || current.y > 7 ) {
+        return std::vector< coordinates<int64_t> >{};
+    }
+
+    int32_t piece_id = a_piece->tell_id(); 
+    constString color{ a_piece->tell_color() };
+    int32_t color_id = a_piece->tell_color_id();
+
+    helper::coordinates<int64_t> aux;
+
+    std::vector< helper::coordinates<int64_t> > castling_moves;
+    castling_moves.reserve(2); // we know that this will only contains at most 2 moves
+
+    std::vector< helper::coordinates<int64_t> > can_go;
+    can_go.reserve(2); // we also know that this will at most contains 2 moves
+
+    std::vector< helper::coordinates<int64_t> > directions_cannot_go;
+    directions_cannot_go.reserve(2);
+
+    
+    // check if the king can castle
+    // first we check if the king is in his starting position,
+    // and then we check if his castles are in are in their starting positions.
+    if ( piece_id == KING*pow(10, color_id) && !a_piece->has_moved() ) {
+
+        // first check if there is a piece, then if the piece is a rook
+        if ( !( get_square( 0, current.y ).lock()->get_piece().expired() ) ) { 
+            if ( get_square( 0, current.y ).lock()->get_piece().lock()->tell_id() == ROOK*pow(10, color_id) &&
+                get_square( 0, current.y ).lock()->get_piece().lock()->tell_color_id() == color_id ) {
+                    castling_moves.push_back( helper::coordinates<int64_t>{ -2, 0 } );
+            }
+        }
+        
+        if ( !( get_square( 7, current.y).lock()->get_piece().expired() ) ) {
+            if ( get_square( 7, current.y).lock()->get_piece().lock()->tell_id() == ROOK*pow(10, color_id) &&
+                get_square( 7, current.y).lock()->get_piece().lock()->tell_color_id() == color_id ) {
+                    castling_moves.push_back( helper::coordinates<int64_t>{ 2, 0 } );
+            }
+        }
+    }
+
+    else {
+        return std::vector< coordinates<int64_t> >{};
+    }
+
+
+    for ( helper::coordinates<int64_t>& move : castling_moves ) {
+        aux = current + move;
+
+        // because the king cannot move to a tile that is attacked, we have to do this check
+        // we also use clamp in these places to protect against segfault.
+        if ( piece_id == KING*pow(10, color_id) && get_square( aux.x, aux.y ).lock()->attacked() ) {
+            for ( aString a_color : get_square( aux.x, aux.y ).lock()->attacking_colors() ) {
+                if ( color != a_color) {
+                    directions_cannot_go.push_back( move );
+                    break;
+                }
+            }
+        }
+
+        
+
+        // check if a square has a piece, so we cannot go to the next square behind it.
+        if ( get_square( aux.x, aux.y ).lock()->has_piece() ) {
+            directions_cannot_go.push_back( move );
+        }
+    }
+
+    
+    // this will at the most do only 4 iterations, because caslting_moves and directions_cannot_go 
+    // will both have at most 2 moves
+    // this std::copy_if only copies the move sinto can_go if they're not in directions_cannot_go
+    // so basically filter out the moves to which he king cannot go
+    std::copy_if( castling_moves.begin(), castling_moves.end(), std::back_inserter(can_go), [&]( helper::coordinates<int64_t> i ) -> bool { return std::find( directions_cannot_go.begin(), directions_cannot_go.end(), i ) == directions_cannot_go.end(); });
+    
+    
+    
+    return can_go;
 }
 
 
