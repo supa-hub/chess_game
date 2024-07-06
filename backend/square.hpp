@@ -35,11 +35,11 @@ class Square
             colors_attacking.reserve(2);
         }
 
-        Square( aString name, int x, int y )
+        Square( aString name0, int x0, int y0 )
         {
-            this->name = name;
-            this->position.x = x;
-            this->position.y = y;
+            this->name = name0;
+            this->position.x = x0;
+            this->position.y = y0;
             colors_attacking.reserve(2);
 
             if ( name == "black" ) {
@@ -48,11 +48,11 @@ class Square
 
         }
 
-        Square( aString name, int x, int y, int id )
+        Square( aString name0, int x0, int y0, int id0 )
         {
-            this->name = name;
-            this->position.x = x;
-            this->position.y = y;
+            this->name = name0;
+            this->position.x = x0;
+            this->position.y = y0;
             this->id = id;
             colors_attacking.reserve(2);
 

@@ -22,7 +22,7 @@ Copyright (C) 2024  Tomi Bilcu a.k.a supa-hub
 #include <tchar.h>
 #include <windows.h>
 #include <iostream>
-#include <stdint.h>
+#include <cstdint>
 #include <algorithm>
 #include <deque>
 #include <string_view>
@@ -42,8 +42,6 @@ struct renderState {
 struct textField {
     int32_t height = 550;
     int32_t width = 300;
-
-    std::deque<std::string> text;  // we use deque for more efficient value storing compared to std::vector.
 
     std::deque<HWND> boxes; // will store all the created text windows that are created and will delete the old ones.
 };
@@ -117,14 +115,12 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         // this will be called by the timer at certain intervals
         case WM_TIMER: {
             switch ( wParam ) {
-
                 case IDT_TIMER1: {
                     // we use the below std::cout for displaying the total frames of the last 10 seconds
                     std::cout << "count: " << count << "\n";
                     count = 0;
                     break;
                 }
-
                 /*
                 // this will trigger for every frame in a framerate
                 case IDT_TIMER2: {
@@ -150,6 +146,9 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                     break;
                 }
                 */
+                
+                default:
+                    break;
             }
 
         } break;
@@ -162,11 +161,11 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                 case 1:
                     //std::cout << "joo" << "\n";
                     game_object.current()->add_shuffled_pieces();
-                    text_field.text.clear();
+                    game_object.reset_text();
 
                     draw_chessboard(render_state.width, render_state.height);
                     draw_pieces(game_object.current());
-                    display_all_text(600, 0, hwnd);
+                    display_all_text(600, 0, hwnd, game_object.get_moves().lock());
 
                     
 
@@ -180,16 +179,19 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                     game_object.end_game(0);
                     board_ptr = game_object.new_game();
                     board_ptr->add_pieces();
-                    text_field.text.clear();
+                    game_object.reset_text();
 
                     draw_chessboard(render_state.width, render_state.height);
                     draw_pieces(game_object.current());
-                    display_all_text(600, 0, hwnd);
+                    display_all_text(600, 0, hwnd, game_object.get_moves().lock());
 
 
                     
                     
                     //display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd, 1);
+                    break;
+
+                default:
                     break;
             }
             break;
@@ -202,7 +204,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             render_state.width = rect.right - rect.left - text_field.width - a_button.width;
             render_state.height = rect.bottom - rect.top;
 
-            uint32_t size = render_state.width * render_state.height * sizeof(unsigned int);
+            uint32_t size = static_cast<uint32_t>(render_state.width) * static_cast<uint32_t>(render_state.height) * sizeof(unsigned int);
 
             if ( render_state.memory ) { VirtualFree(render_state.memory, 0, MEM_RELEASE); }
 
@@ -221,7 +223,7 @@ LRESULT CALLBACK window_callback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
             draw_chessboard(render_state.width, render_state.height);
             draw_pieces(game_object.current());
-            display_all_text(600, 0, hwnd);
+            display_all_text(600, 0, hwnd, game_object.get_moves().lock());
             display_button("shuffle pieces", render_state.width + text_field.width, 0, hwnd, 1);
             display_button("reset_game", render_state.width + text_field.width, a_button.height+10, hwnd, 2);
 
@@ -283,7 +285,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     helper::coordinates<int64_t> old_clicked_square;
 
-    std::string new_text;
+    bool new_text;
 
     bool piece_just_moved = false; // checks whether we just moved a piece
     
@@ -359,7 +361,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
     draw_pieces(game_object.current());
 
-    display_all_text(600, 0, window);
+    display_all_text(600, 0, window, game_object.get_moves().lock());
     /*
     StretchDIBits(
         hdc, 
@@ -381,7 +383,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
         MSG message;
 
-        for ( int i = 0; i < BUTTON_COUNT; i++ ) {
+        for ( size_t i = 0; i < BUTTON_COUNT; i++ ) {
             input.buttons[i].changed = false;
         }
 
@@ -411,7 +413,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
                 case WM_KEYUP:
                 case WM_KEYDOWN: {
-                    unsigned int vk_code = (unsigned int)message.wParam;
+                    unsigned int vk_code = static_cast<unsigned int>(message.wParam);
                     bool is_down = ((message.lParam & ( 1 << 31 )) == 0);
 
 
@@ -430,6 +432,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
                         case VK_RIGHT: 
                             button_state = BUTTON_RIGHT;
+                            break;
+
+                        default:
                             break;
 
                         
@@ -472,19 +477,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
                             new_text = game_object.move_piece( clicked_square, a_square, mouse_click, render_state.width, render_state.height );
 
-                            if ( !new_text.empty() ) {
-                                text_field.text.push_back( new_text );
+                            if ( new_text ) {
                                 piece_just_moved = true;
                             }
 
-                            display_all_text(600, 0, window);
-
-                            
-                                    /*
-                                    draw_chessboard(render_state.width, render_state.height);
-                                    drawRedSquare(mouse_click.x, mouse_click.y);
-
-                                    draw_pieces(board_ptr);*/
+                            display_all_text( 600, 0, window, game_object.get_moves().lock() );
 
                         }
                         
@@ -525,7 +522,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                                 );
 
 
-
                     
                 } break;
                 
@@ -538,6 +534,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                     DispatchMessage(&message);
                 }*/
 
+                default:
+                    break;
                 
 
             }

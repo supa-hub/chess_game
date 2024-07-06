@@ -2,7 +2,7 @@
 #define HELPERTOOLS
 
 #include <algorithm>
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <vector>
 #include <cmath>
@@ -45,28 +45,48 @@ namespace helper
 
 static std::array<std::string, 8> chess_letters = {"a", "b", "c", "d", "e", "f", "g", "h"};
 
+
+
+// we create a clamp function to only choose the value if its
+// in the accepted range
+template <typename T>
+constexpr inline T clamp( const T& value, const T& smallest, const T& largest ) noexcept
+{
+    return std::min(largest, std::max(value, smallest));
+}
+
+
+
+
 template<typename T>
 struct coordinates 
 {
-    int64_t x = 0;
-    int64_t y = 0;
+    T x = 0;
+    T y = 0;
     
 
     //add a constructor for std::make_unique. Modified parameter names for clarity
-    coordinates( T x1 = 0, T y1 = 0 ) noexcept : x( static_cast<int64_t>(x1) ), y( static_cast<int64_t>(y1) ) { } 
+    coordinates( T x1 = 0, T y1 = 0 ) noexcept : x(x1), y(y1) { } 
 
 
     coordinates(const coordinates& a ) noexcept : x(a.x), y(a.y) { }
 
     // we create some basic operations inside the struct
-    inline coordinates operator + ( const coordinates<T>& a ) noexcept
+    inline coordinates<T> operator + ( const coordinates<T>& a ) noexcept
     {
         return { x+a.x, y+a.y };
     }
 
-    inline coordinates operator - ( const coordinates<T>& a )
+    inline coordinates<T> operator - ( const coordinates<T>& a )
     {
         return { x-a.x, y-a.y };
+    }
+
+    inline coordinates<T>& operator = ( const coordinates<T>& a ) 
+    { 
+        x = a.x;
+        y = a.y;
+        return *this;
     }
 
     
@@ -95,7 +115,7 @@ struct coordinates
     inline std::string toChesstring()
     {
         // We get the letter for the x axis and we also clamp the value so we dont get segfault.
-        return chess_letters[std::clamp<int64_t>(x, 0, 7)] + std::to_string(y+1);
+        return chess_letters[clamp<uint64_t>(static_cast<uint64_t>(x), 0, 7)] + std::to_string(y+1);
     }   
 
     // increment is a method which only 
@@ -115,13 +135,6 @@ struct coordinates
 
 
 
-// we create a clamp function to only choose the value if its
-// in the accepted range
-template <typename T>
-constexpr inline T clamp( const T& value, const T& smallest, const T& largest ) noexcept
-{
-    return std::min(largest, std::max(value, smallest));
-}
 
 
 
@@ -224,14 +237,14 @@ class RGB
         }
 
 
-        inline RGB operator + ( RGB color ) noexcept 
+        inline RGB operator + ( RGB a_color ) noexcept 
         {
-            return { this->red() + color.red(), this->green() + color.green(), this->blue() + color.blue() };
+            return { this->red() + a_color.red(), this->green() + a_color.green(), this->blue() + a_color.blue() };
         }
 
-        inline RGB operator - ( RGB color ) noexcept
+        inline RGB operator - ( RGB a_color ) noexcept
         {
-            return { this->red() - color.red(), this->green() - color.green(), this->blue() - color.blue() };
+            return { this->red() - a_color.red(), this->green() - a_color.green(), this->blue() - a_color.blue() };
         }
 
         inline RGB operator = ( const uint32_t& num ) noexcept
@@ -242,7 +255,7 @@ class RGB
 
         inline RGB to_rgb( const uint32_t& hex ) noexcept
         {
-            return { color = hex };
+            return { this->color = hex };
         }
 
 

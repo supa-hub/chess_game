@@ -1,5 +1,5 @@
 #include "backend/helper_tools.hpp"
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <vector>
 #include "backend/board.hpp"

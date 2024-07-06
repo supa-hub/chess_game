@@ -32,7 +32,7 @@ struct Input
 void WindowPosAbsolute(HWND& window, RECT* rect ) 
 {
     GetClientRect(window, rect);
-    MapWindowPoints(window, GetParent(window), (LPPOINT)rect, 2);
+    MapWindowPoints(window, GetParent(window), reinterpret_cast<LPPOINT>(rect), 2);
 }
 
 

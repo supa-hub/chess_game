@@ -2,7 +2,7 @@
 #define RENDER_BUTTON
 
 #include "backend/helper_tools.hpp"
-#include <stdint.h>
+#include <cstdint>
 #include <tchar.h>
 #include <memory>
 #include <string>
@@ -10,7 +10,7 @@
 
 
 // simple function to abstract the creation of a window button
-inline void display_button(std::string text, const int32_t& x, const int32_t& y, HWND hwnd, const int64_t& command)
+inline void display_button(std::string text, const int32_t& x, const int32_t& y, HWND hwnd, uint64_t command)
 {
     std::string standard = "BUTTON";
     std::wstring standard1 = std::wstring(standard.begin(), standard.end());
@@ -24,7 +24,7 @@ inline void display_button(std::string text, const int32_t& x, const int32_t& y,
                         text1.c_str(),
                         WS_VISIBLE | WS_CHILD | WS_BORDER | BS_LEFT,
                         x, y, a_button.width, a_button.height,
-                        hwnd, (HMENU) command, NULL, NULL
+                        hwnd, reinterpret_cast<HMENU>(command), NULL, NULL
                         );
 
     

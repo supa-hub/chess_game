@@ -5,7 +5,7 @@
 #include <memory>
 #include <iostream>
 #include <algorithm>
-#include <stdint.h>
+#include <cstdint>
 #include <random>
 #include <functional>
 #include <unordered_set>
@@ -23,8 +23,7 @@ using helper::coordinates;
 
 // simplify type declarations
 typedef std::string aString;
-typedef std::string_view constString;
-typedef std::weak_ptr<Piece> weakPiecePtr; 
+typedef std::weak_ptr<Piece> weakPiecePtr;
 typedef std::shared_ptr<Piece> sharedPiecePtr;
 typedef std::unique_ptr< helper::coordinates<int64_t> > coordinate_ptr;
 
@@ -39,20 +38,50 @@ class Board
         int32_t amount_of_players = 2;
 
         // we keep count of each players score
-        int score1 = 0;
-        int score2 = 0;
+        int32_t score1 = 0;
+        int32_t score2 = 0;
+
+
+        std::unordered_set< aString > kings_in_check;
+        std::unordered_set< aString > kings_in_checkmate;
+        bool finished = false;
+
 
         std::unordered_set<int32_t> already_used; // well use this for when we shuffle around pieces (it's a special gamemode)
 
         // we will create a 8x8 board into this container ( NOTE: you can specify a custom board size, but the pieces will be in the 1 to 8 squares )
         std::vector< std::vector< std::shared_ptr<Square> >> all_squares;
 
-        int32_t board_length = 0; // we will use this member in the future if we want to create a game with different board sizes
+        uint32_t board_length = 0; // we will use this member in the future if we want to create a game with different board sizes
 
-        std::vector< std::vector<constString> > all_captured_pieces; // this will hold all the capured pieces names separated by their color_id
-
+        std::vector< std::vector<std::string> > all_captured_pieces; // this will hold all the capured pieces names separated by their color_id
 
     public:
+    
+        std::unordered_set<aString> checked_kings() { return this->kings_in_check; }
+        std::unordered_set<aString> checkmated() { return this->kings_in_checkmate; }
+        bool is_finished() { return this->finished; }
+
+        void end_game()
+        {
+            if ( kings_in_checkmate.empty() ) return;
+
+            for ( const aString& color : kings_in_checkmate ) {
+                if ( color == "w" ) { 
+                    score2++; 
+                    return;
+                }
+
+                else if ( color == "b" ) {
+                    score1++;
+                    return;
+                }
+            }
+
+            finished = true;
+            return;
+        }
+
 
         Board() : all_squares(8, std::vector< std::shared_ptr<Square>>(8) ), board_length(8), all_captured_pieces(2)
         {
@@ -77,8 +106,8 @@ class Board
 
             // add all the pieces in their places onto the board
             // I dont use switch-statement to make the code clearer
-            for ( int i = 0; i < 8; i++ ) {
-                for ( int j = 0; j < 8; j++ ) {
+            for ( size_t i = 0; i < 8; i++ ) {
+                for ( size_t j = 0; j < 8; j++ ) {
                     a_square = all_squares[i][j];
                     a_square->remove_piece();
 
@@ -117,8 +146,8 @@ class Board
 
             // add all the pieces in their places onto the board
             // I dont use switch-statement to make the code clearer
-            for ( int i = 0; i < 8; i++ ) {
-                for ( int j = 0; j < 8; j++ ) {
+            for ( size_t i = 0; i < 8; i++ ) {
+                for ( size_t j = 0; j < 8; j++ ) {
                     a_square = all_squares[i][j];
                     a_square->remove_piece();
                 }
@@ -127,14 +156,14 @@ class Board
 
 
             // add all the pieces in their places onto the board
-            for ( int i = 0; i < 8; i++ ) {
+            for ( size_t i = 0; i < 8; i++ ) {
                 a_square = all_squares[i][1];
                 
                 a_square->add_piece(std::make_shared<Pawn>("P", "w", WHITE));
             }
 
 
-            for ( int i = 0; i < 8; i++ ) {
+            for ( size_t i = 0; i < 8; i++ ) {
                 a_square = all_squares[i][6];
                 
                 a_square->add_piece(std::make_shared<Pawn>("P", "b", BLACK));
@@ -187,22 +216,22 @@ class Board
 
         // to simplify the add_shuffled_pieces() method, I created a new method that add a specific piece, 
         // otherwise I would manually have to do this to every piece
-        void add_specific_piece(sharedPiecePtr a_piece, const int32_t& amount, const helper::coordinates<int32_t>& start_range, const helper::coordinates<int32_t>& end_range)
+        void add_specific_piece(sharedPiecePtr a_piece, const uint32_t& amount, const helper::coordinates<uint32_t>& start_range, const helper::coordinates<uint32_t>& end_range)
         {
-            int32_t i = 0;
-            int32_t chosen = 0;
+            uint32_t i = 0;
+            uint32_t chosen = 0;
             std::shared_ptr<Square> a_square;
 
             // we ensure that the given range is in the given range of the board
-            int32_t x0 = helper::clamp<int32_t>(start_range.x, 0, board_length-1);
+            uint32_t x0 = helper::clamp<uint32_t>(start_range.x, 0, board_length-1);
             //int32_t y0 = clamp<int32_t>(start_range.y, 0, board_length-1);
-            int32_t x1 = helper::clamp<int32_t>(end_range.x, 0, board_length-1);
-            int32_t y1 = helper::clamp<int32_t>(end_range.y, 0, board_length-1);
+            uint32_t x1 = helper::clamp<uint32_t>(end_range.x, 0, board_length-1);
+            uint32_t y1 = helper::clamp<uint32_t>(end_range.y, 0, board_length-1);
 
             std::default_random_engine generator;
             generator.seed(std::chrono::system_clock::now().time_since_epoch().count()); // give our generator a random seed
 
-            std::uniform_int_distribution<int> distribution(x0,x1);
+            std::uniform_int_distribution<uint32_t> distribution(x0,x1);
 
             auto random_num = std::bind( distribution, generator );  // bind the generator to the distribution object
 
@@ -237,7 +266,7 @@ class Board
 
             // we dont know how many pieces each player will capture, but we already reserve enough space for all the pieces
             // if black captures a white piece, then the white pieces name goes into blacks captured array
-            for ( std::vector<constString> a_color_arr : all_captured_pieces ) {
+            for ( std::vector<std::string> a_color_arr : all_captured_pieces ) {
                 a_color_arr.clear();
                 a_color_arr.reserve(16);
             }
@@ -246,8 +275,8 @@ class Board
             int cycle = 0;
 
             // with this nested loop we create all the squares
-            for ( int i = this->board_length-1; i > -1; i-- ) {
-                for ( int j = this->board_length-1; j > -1; j-- ) {
+            for ( size_t i = 0; i < this->board_length; i++ ) {
+                for ( size_t j = 0; j < this->board_length; j++ ) {
 
                     // here we use normal initialisation because if we use std::make_shared the objects
                     // wont be deleted until all the weak pointers go out of scope.
@@ -294,17 +323,11 @@ class Board
 
         std::weak_ptr<Square> get_square( helper::coordinates<int64_t> location )
         {
-            std::weak_ptr<Square> square;
-            square = all_squares[location.x][location.y];
-
             return all_squares[location.x][location.y];
         }
 
         std::weak_ptr<Square> get_square( const int64_t& x, const int64_t& y )
         {
-            std::weak_ptr<Square> square;
-            square = all_squares[x][y];
-
             return all_squares[x][y];
         }
         
@@ -358,17 +381,20 @@ class Board
 
 
             update_attacked_squares();
-            
+            update_check();
+            update_checkmate();
             
 
-            if ( is_check() ) { 
-                    std::cout << "king is in check " << this->player_turn << "\n"; 
-                }
+            //update_check();
 
+            /*
             if ( is_checkmate() != "" ) {
                 std::cout << "the opposing king is checkmated" << "\n"; 
                 std::cout << "the color " << is_checkmate() << " won." << "\n"; 
             }
+            */
+
+            //update_checkmate();
 
 
             if ( ++this->player_turn == amount_of_players ) {
@@ -393,7 +419,7 @@ class Board
             }
 
             sharedPiecePtr orig_piece = orig.lock()->get_piece().lock();
-            int32_t color_id = orig_piece->tell_color_id();
+            uint16_t color_id = orig_piece->tell_color_id();
 
             std::shared_ptr<Square> target_square; // the square that contains the rook that we'll move
 
@@ -458,8 +484,8 @@ class Board
             king_pos.reserve(2); // usually theres 2 kings, so we optimise,
             // if theres more kings, the push_back method will increase the size.
 
-            for ( int i = 0; i < 8; i++ ) {
-                for ( int j = 0; j < 8; j++ ) {
+            for ( size_t i = 0; i < 8; i++ ) {
+                for ( size_t j = 0; j < 8; j++ ) {
                     a_square_ptr = all_squares[i][j];
 
                     // first we check that the square contains a piece
@@ -486,7 +512,7 @@ class Board
         bool has_piece( const helper::coordinates<int64_t>& a ) noexcept
         {   
             if ( a.x >= 0 && a.x < 7 && a.y >= 0 && a.y < 7 ) {
-                return all_squares[a.x][a.y]->has_piece();
+                return all_squares[static_cast<size_t>( a.x )][static_cast<size_t>( a.y )]->has_piece();
             }
 
             else {
@@ -507,9 +533,9 @@ class Board
 
             
             const std::vector< coordinate_ptr >& moves = a_piece->possible_moves();
-            int32_t piece_id = a_piece->tell_id(); 
-            constString color{ a_piece->tell_color() };
-            int32_t color_id = a_piece->tell_color_id();
+            uint16_t piece_id = a_piece->tell_id(); 
+            std::string_view color{ a_piece->tell_color() };
+            uint16_t color_id = a_piece->tell_color_id();
 
 
             helper::coordinates<int64_t> aux0 = current;
@@ -538,7 +564,7 @@ class Board
                 aux = aux0 + vector;
 
                 // if the move is not out of bounds, we add it.
-                if ( aux.x < 0 || aux.x > 7 || aux.y < 0 || aux.y > 7 ) {
+                if ( aux.x < 0 || aux.x >= this->board_length || aux.y < 0 || aux.y >= this->board_length ) {
                     directions_cannot_go.push_back( vector );
                     continue; // this ensures that we skip the parts from below so we dont have to use helper::clamp
                 }
@@ -581,7 +607,7 @@ class Board
                 is_same_direction = false;
                 
                 // if the move is not out of bounds, we add it.
-                if ( aux.x < 0 || aux.x > 7 || aux.y < 0 || aux.y > 7 ) {
+                if ( aux.x < 0 || aux.x >= this->board_length || aux.y < 0 || aux.y >= this->board_length ) {
                     continue; // this ensures that we skip the parts from below so we dont have to use helper::clamp
                 }
 
@@ -618,8 +644,8 @@ class Board
         {
             helper::coordinates<int64_t> aux0 = current;
             helper::coordinates<int64_t> aux;
-            constString color{ a_piece->tell_color() };
-            int32_t color_id = a_piece->tell_color_id();
+            std::string_view color{ a_piece->tell_color() };
+            uint16_t color_id = a_piece->tell_color_id();
 
             std::shared_ptr<Square> a_square;
             std::shared_ptr<Square> attacked_square;
@@ -683,8 +709,8 @@ class Board
             Square a_square;
             helper::coordinates<int64_t> aux;
 
-            for ( int i = 0; i < 8; i++ ) {
-                for ( int j = 0; j < 8; j++ ) {
+            for ( size_t i = 0; i < 8; i++ ) {
+                for ( size_t j = 0; j < 8; j++ ) {
                     a_square = *all_squares[i][j];
                     aux = a_square.coordinates();
                     this->get_square(aux).lock()->change_attacked_status(false);
@@ -692,8 +718,8 @@ class Board
             }
 
 
-            for ( int i = 0; i < 8; i++ ) {
-                for ( int j = 0; j < 8; j++ ) {
+            for ( size_t i = 0; i < 8; i++ ) {
+                for ( size_t j = 0; j < 8; j++ ) {
                     a_square = *all_squares[i][j];
 
                     // first we check that the square contains a piece
@@ -755,22 +781,25 @@ class Board
                     }
                 }
             }
+            
+
+            return;
         }
 
 
         // returns the names of captured pieces
-        std::vector<constString> captured_pieces( const int& color_id ) { 
-            return all_captured_pieces[ helper::clamp<int>( color_id, 0, all_captured_pieces.size()-1 ) ]; }
+        std::vector<aString> captured_pieces( const uint16_t& color_id ) { 
+            return all_captured_pieces[ helper::clamp<size_t>( static_cast<size_t>(color_id), 0, all_captured_pieces.size()-1 ) ]; 
+        }
 
 
         // these  methods will tell us if the king is in check.
-        bool is_check();
-        constString is_checkmate();
+        void update_check();
+        void update_checkmate();
 
-        // The below 2 overloads are almost the same as the original methods but they
-        // look for check and ckeckmate for a specific color.
-        bool is_check( const constString& color_to_check );
-        constString is_checkmate( const constString& color_to_check );
+        // The below 2 methods look for check and ckeckmate for a specific color.
+        bool is_check( const std::string& color_to_check );
+        bool is_checkmate( const aString& color_to_check );
 
         // This method will be the main way the code filters out the places the the piece cannot 
         // go to at that moment.
@@ -778,7 +807,10 @@ class Board
 
     private:
         // with this method we'll check if the king can castle
-        inline std::vector< helper::coordinates<int64_t> > king_castling( helper::coordinates<int64_t> current, sharedPiecePtr a_piece );
+        template<typename T>
+        inline std::vector< helper::coordinates<T> > king_castling( helper::coordinates<T> current, sharedPiecePtr a_piece );
+        template<typename T>
+        inline bool square_is_protected( helper::coordinates<T> current, sharedPiecePtr king );
     
  
 };
@@ -786,14 +818,13 @@ class Board
 
 
 
-bool Board::is_check()
+inline void Board::update_check()
 {   
-
-
     std::vector< coordinate_ptr > king_coords = this->find_kings();
+    this->kings_in_check.clear();
 
     if ( king_coords.empty() ) {
-        return false;
+        return;
     }
 
     /*
@@ -801,18 +832,21 @@ bool Board::is_check()
      a piece of different color attacks it.
     */
     for ( coordinate_ptr& coords : king_coords ) {
+        std::string king_color = get_square(*coords).lock()->get_piece().lock()->tell_color();
+        
         // loop through the piece colors that attack the square
         for ( aString a_color : get_square(*coords).lock()->attacking_colors() ) {
 
-
+            
             // We check if the square that the king is on is attacked by an opposite color piece
-            if ( a_color != get_square(*coords).lock()->get_piece().lock()->tell_color() )
-                return true;
+            if ( a_color != king_color ) {
+                kings_in_check.insert( king_color );
+            }
         }
            
     }
 
-    return false;
+    return;
     
 }
 
@@ -820,40 +854,56 @@ bool Board::is_check()
  We check if a king of certain color is in check. 
  We need this for example when white tries to move a pawn but the white king is in check.
 */
-bool Board::is_check(const constString& color_to_check)
+bool Board::is_check( const aString& color_to_check )
 {   
+    update_check();
+    return this->kings_in_check.count( color_to_check ) != 0;
+}
 
 
+
+
+inline void Board::update_checkmate()
+{
     std::vector< coordinate_ptr > king_coords = this->find_kings();
-    std::string king_color;
+    this->kings_in_checkmate.clear();
 
-    if ( king_coords.empty() ) {
-        return false;
+    if ( king_coords.empty()) {
+        return;
     }
 
-    /*
-     we check the helper::coordinates<int64_t> where kings are located and check if 
-     a piece of different color attacks it.
-    */
-    for ( coordinate_ptr& coords : king_coords ) {
-        king_color = get_square(*coords).lock()->get_piece().lock()->tell_color();
+    for ( const coordinate_ptr& coords : king_coords ) {
+        sharedPiecePtr king = get_square(*coords).lock()->get_piece().lock();
 
-        if ( king_color != color_to_check ) { continue; }
-
-        // loop through the piece colors that attack the square
         for ( aString a_color : get_square(*coords).lock()->attacking_colors() ) {
 
-            //std::cout << "a color: " << a_color << "\n";
-
-            // We check if the square that the king is on is attacked by an opposite color piece
-            if ( a_color != king_color )
-                return true;
+            
+            /*
+             in this if statement we check if the king is in check, and also
+             if theres nowhere the king can go. I both of these are true,
+             then the king is in checkmate.
+            */
+            if ( 
+                a_color != king->tell_color()  
+                &&  
+                find_possible_tiles_to_move_to( 
+                    *coords,
+                    king
+                ).empty()
+            ) {
+                
+            }
+            // this is for the special case in which the piece checking the king is right next to the it
+            else if ( this->square_is_protected( *coords, king ) ) {
+                this->kings_in_checkmate.insert( king->tell_color() );
+            }
+                
         }
            
     }
 
-    return false;
-    
+
+    return;
 }
 
 
@@ -861,86 +911,10 @@ bool Board::is_check(const constString& color_to_check)
  We check if the game ends because a king is in checkmate.
  This method returns the color that checkmated the king, e.g the opponents color.
 */
-constString Board::is_checkmate()
+bool Board::is_checkmate( const aString& color_to_check )
 {
-    std::vector< coordinate_ptr > king_coords = this->find_kings();
-
-    if ( king_coords.empty()) {
-        return "";
-    }
-
-    for ( coordinate_ptr& coords : king_coords ) {
-        for ( constString a_color : get_square(*coords).lock()->attacking_colors() ) {
-
-            sharedPiecePtr king = get_square(*coords).lock()->get_piece().lock();
-            
-            /*
-             in this if statement we check if the king is in check, and also
-             if theres nowhere the king can go. I both of these are true,
-             then the king is in checkmate.
-            */
-            if ( 
-                a_color != king->tell_color()  
-                &&  
-                find_possible_tiles_to_move_to( 
-                    *coords,
-                    king
-                ).empty()
-            ) {
-                return a_color;
-            }
-                
-        }
-           
-    }
-
-
-    return "";
-}
-
-
-
-// we check if the game ends because a king is in checkmate
-constString Board::is_checkmate(const constString& color_to_check)
-{
-    std::vector< coordinate_ptr > king_coords = this->find_kings();
-    constString king_color;
-
-    if ( king_coords.empty()) {
-        return "";
-    }
-
-    for ( coordinate_ptr& coords : king_coords ) {
-        for ( constString a_color : get_square(*coords).lock()->attacking_colors() ) {
-
-            sharedPiecePtr king = get_square(*coords).lock()->get_piece().lock();
-
-            king_color = king->tell_color();
-
-            if ( king_color != color_to_check ) { continue; }
-            
-            /*
-             in this if statement we check if the king is in check, and also
-             if theres nowhere the king can go. I both of these are true,
-             then the king is in checkmate.
-            */
-            if ( 
-                a_color != king->tell_color()  
-                &&  
-                find_possible_tiles_to_move_to( 
-                    *coords,
-                    king
-                ).empty()
-            ) {
-                return a_color;
-            }
-                
-        }
-           
-    }
-
-
-    return "";
+    update_checkmate();
+    return this->kings_in_checkmate.count( color_to_check ) != 0;
 }
 
 
@@ -957,7 +931,7 @@ std::vector< helper::coordinates<int64_t> > Board::doesnt_get_in_check(weakPiece
     sharedPiecePtr removed_piece;
     if ( a_piece.expired() ) return possible_moves;
 
-    constString color_to_check{ a_piece.lock()->tell_color() };
+    aString color_to_check = a_piece.lock()->tell_color();
     
 
     // filter out the places that the piece cannot go to
@@ -969,11 +943,12 @@ std::vector< helper::coordinates<int64_t> > Board::doesnt_get_in_check(weakPiece
 
         base_move(get_square(current_pos), get_square(a_move));
 
-
+        update_attacked_squares();
         // if the king is not in check anymore, then its a possible move.
-        if ( !is_check(color_to_check) &&  is_checkmate(color_to_check) == "" ) {
+        if ( !is_check(color_to_check) && !is_checkmate(color_to_check) ) {
             possible_moves.push_back(vector);
         }
+
 
         base_move(get_square(a_move), get_square(current_pos));
 
@@ -991,20 +966,53 @@ std::vector< helper::coordinates<int64_t> > Board::doesnt_get_in_check(weakPiece
     
 }
 
+// checks whether a piece that is checking the king right next to the king is protected by another piece
+template<typename T>
+inline bool Board::square_is_protected( helper::coordinates<T> current, sharedPiecePtr king )
+{
+    bool return_val = false;
+    sharedPiecePtr removed_piece;
+
+    for ( helper::coordinates<int64_t>& vec : find_possible_tiles_to_move_to( current, king ) ) {
+        removed_piece = get_square(current + vec).lock()->get_piece().lock();
+        base_move( get_square(current), get_square(current + vec) );
+
+        if ( is_check( king->tell_color() ) ) {
+            return_val = true;
+        }
+
+        base_move(get_square(current + vec), get_square(current));
+
+        // because a removed piece doesnt retain his old position, 
+        // we cant use base_move or move_piece methods to add it back,
+        // we'll also call update_attacked_squared() after we've added the piece back.
+        if ( removed_piece ) { 
+            get_square(current + vec).lock()->add_piece(removed_piece);
+            update_attacked_squares();
+        }
+
+        if ( return_val ) {
+            break;
+        }
+    }
+
+    return return_val;
+}
 
 
 
-inline std::vector< helper::coordinates<int64_t> > Board::king_castling( helper::coordinates<int64_t> current, sharedPiecePtr a_piece )
+template<typename T>
+inline std::vector< helper::coordinates<T> > Board::king_castling( helper::coordinates<T> current, sharedPiecePtr a_piece )
 {
     if ( !a_piece ) return std::vector< helper::coordinates<int64_t> >();
 
-    if ( current.x < 0 || current.x > 7 || current.y < 0 || current.y > 7 ) {
+    if ( current.x < 0 || current.x > this->board_length || current.y < 0 || current.y > this->board_length ) {
         return std::vector< coordinates<int64_t> >{};
     }
 
-    int32_t piece_id = a_piece->tell_id(); 
-    constString color{ a_piece->tell_color() };
-    int32_t color_id = a_piece->tell_color_id();
+    uint16_t piece_id = a_piece->tell_id(); 
+    std::string_view color{ a_piece->tell_color() };
+    uint16_t color_id = a_piece->tell_color_id();
 
     helper::coordinates<int64_t> aux;
 
@@ -1021,7 +1029,7 @@ inline std::vector< helper::coordinates<int64_t> > Board::king_castling( helper:
     // check if the king can castle
     // first we check if the king is in his starting position,
     // and then we check if his castles are in are in their starting positions.
-    if ( piece_id == KING*pow(10, color_id) && !a_piece->has_moved() ) {
+    if ( piece_id == KING*pow(10, color_id) && !a_piece->has_moved() && ( this->kings_in_check.count( a_piece->tell_color() ) == 0 ) ) {
 
         // first check if there is a piece, then if the piece is a rook
         if ( !( get_square( 0, current.y ).lock()->get_piece().expired() ) ) { 
@@ -1071,7 +1079,7 @@ inline std::vector< helper::coordinates<int64_t> > Board::king_castling( helper:
     // will both have at most 2 moves
     // this std::copy_if only copies the move sinto can_go if they're not in directions_cannot_go
     // so basically filter out the moves to which he king cannot go
-    std::copy_if( castling_moves.begin(), castling_moves.end(), std::back_inserter(can_go), [&]( helper::coordinates<int64_t> i ) -> bool { return std::find( directions_cannot_go.begin(), directions_cannot_go.end(), i ) == directions_cannot_go.end(); });
+    std::copy_if( castling_moves.begin(), castling_moves.end(), std::back_inserter(can_go), [&directions_cannot_go]( helper::coordinates<int64_t> i ) -> bool { return std::find( directions_cannot_go.begin(), directions_cannot_go.end(), i ) == directions_cannot_go.end(); });
     
     
     

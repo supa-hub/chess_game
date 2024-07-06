@@ -6,6 +6,7 @@
 #include <vector>
 #include "helper_tools.hpp"
 #include <utility>
+#include <cstdint>
 
 
 // simplify type declarations
@@ -25,14 +26,14 @@ class Piece
         // base values
         aString name;
         aString color;
-        int id = 0;
-        int value = 0;
-        int color_id = 0;
+        uint16_t id = 0;
+        uint16_t value = 0;
+        uint16_t color_id = 0;
         bool first_move = true; // this will help us check if its the first pawn move or rook move, 
                                 // because there are certain chess rules that require that info.
 
 
-        int position; // will be changed into the square when its done.
+        int32_t position; // will be changed into the square when its done.
 
         std::vector< coordinate_ptr > moves;
         std::vector< coordinate_ptr > attacking_moves;
@@ -40,14 +41,16 @@ class Piece
 
         //std::weak_ptr<Square> current_square;
 
+        // this method will add the pieces moves into our vectors
+        virtual void add_moves() {}
 
     public:
         // these methods return the base values of the piece
         aString tell_name() { return this->name; }
         aString tell_color() { return this->color; }
-        int tell_color_id() { return this->color_id; }
-        int tell_id() { return this->id; }
-        int tell_value() { return this->value; }
+        uint16_t tell_color_id() { return this->color_id; }
+        uint16_t tell_id() { return this->id; }
+        uint16_t tell_value() { return this->value; }
         bool has_moved() { return !this->first_move; }
 
         void moved() { this->first_move = false; }
@@ -57,15 +60,15 @@ class Piece
         Piece() : name("none"), color("none") { }
 
         // We construct a standard piece and give it its standard values.
-        Piece(aString name, aString color) : name(name), color(color) { }
+        Piece(aString name0, aString color0) : name(name0), color(color0) { }
 
-        Piece(aString name, aString color, int color_id) : name(name), color(color) { }
+        Piece(aString name0, aString color0, int color_id0) : name(name0), color(color0), color_id(color_id0) { }
 
-        Piece(aString name, aString color, int id, int value) : name(name), color(color), id(id), value(value) { }
+        Piece(aString name0, aString color0, int id0, int value0) : name(name0), color(color0), id(id0), value(value0) { }
 
-        Piece(aString name, aString color, int id, int value,  int color_id) : name(name), color(color), id(id), value(value), color_id(color_id) 
+        Piece(aString name0, aString color0, int id0, int value0, int color_id0) : name(name0), color(color0), id(id0), value(value0), color_id(color_id0) 
         { 
-            this->id = this->id*(pow(10, color_id));
+            this->id = this->id*(pow(10, color_id0));
         }
 
         // Returns all the moves that a piece can do.
@@ -85,29 +88,8 @@ class Piece
 // The class for the pawn.
 class Pawn : public virtual Piece
 {
-        
-    public:
-        Pawn() : Piece()
-        {
-            this->id = PAWN;
-            this->value = 1;
-
-            add_moves();
-        }
-
-        Pawn(aString name, aString color) : Piece(name, color, PAWN, 1)
-        {   
-            add_moves();
-        }
-
-        Pawn(aString name, aString color, int color_id) : Piece(name, color, PAWN, 1, color_id)
-        {
-            add_moves();
-        }
-
-
-
-        inline void add_moves()
+    protected:
+        inline void add_moves() override
         {   
             // We add all the pawn moves as pointers.
             // I use push_back() instead of adding the values in initialisation to support older C++ versions.
@@ -125,8 +107,29 @@ class Pawn : public virtual Piece
                 this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(-1, -1) );
             }
             
-            
         }
+
+    public:
+        Pawn() : Piece()
+        {
+            this->id = PAWN;
+            this->value = 1;
+
+            add_moves();
+        }
+
+        Pawn(aString name0, aString color0) : Piece(name0, color0, PAWN, 1)
+        {   
+            add_moves();
+        }
+
+        Pawn(aString name0, aString color0, int color_id0) : Piece(name0, color0, PAWN, 1, color_id0)
+        {
+            add_moves();
+        }
+
+
+
 
          
 };
@@ -134,27 +137,8 @@ class Pawn : public virtual Piece
 
 class Rook : public virtual Piece
 {
-    public:
-        Rook() : Piece()
-        {
-            this->id = ROOK;
-            this->value = 5;
-
-            add_moves();
-        }
-
-
-        Rook(aString name, aString color) : Piece(name, color, ROOK, 5)
-        {   
-            add_moves();
-        }
-
-        Rook(aString name, aString color, int color_id) : Piece(name, color, ROOK, 5, color_id)
-        {
-            add_moves();
-        }
-
-        inline void add_moves()
+    protected:
+        inline void add_moves() override
         {
             // we add all the moves as pointers
             for ( int i = -7; i < 8; i++ ) {
@@ -171,35 +155,35 @@ class Rook : public virtual Piece
             }
             return;
         }
+
+    public:
+        Rook() : Piece()
+        {
+            this->id = ROOK;
+            this->value = 5;
+
+            add_moves();
+        }
+
+
+        Rook(aString name0, aString color0) : Piece(name0, color0, ROOK, 5)
+        {   
+            add_moves();
+        }
+
+        Rook(aString name0, aString color0, int color_id0) : Piece(name0, color0, ROOK, 5, color_id0)
+        {
+            add_moves();
+        }
+
+        
 };
 
 
 class Bishop : public virtual Piece
 {
-    public:
-        Bishop() : Piece()
-        {
-            this->id = BISHOP;
-            this->value = 3;
-
-            add_moves();
-            
-        }
-
-
-        Bishop(aString name, aString color) : Piece(name, color, BISHOP, 3)
-        {   
-            add_moves();
-        }
-
-        Bishop(aString name, aString color, int color_id) : Piece(name, color, BISHOP, 3, color_id)
-        {
-            add_moves();
-        }
-
-
-
-        inline void add_moves()
+    protected:
+        inline void add_moves() override
         {
             // we add all the moves as pointers
             for ( int i = -7; i < 8; i++ ) {
@@ -220,6 +204,30 @@ class Bishop : public virtual Piece
 
             return;
         }
+
+    public:
+        Bishop() : Piece()
+        {
+            this->id = BISHOP;
+            this->value = 3;
+
+            add_moves();
+            
+        }
+
+
+        Bishop(aString name0, aString color0) : Piece(name0, color0, BISHOP, 3)
+        {   
+            add_moves();
+        }
+
+        Bishop(aString name0, aString color0, int color_id0) : Piece(name0, color0, BISHOP, 3, color_id0)
+        {
+            add_moves();
+        }
+
+
+
 };
 
 
@@ -228,28 +236,9 @@ class Bishop : public virtual Piece
 
 class Knight : public virtual Piece
 {
-    public:
-        Knight() : Piece()
-        {
-            this->id = KNIGHT;
-            this->value = 3;
+    protected:
 
-            add_moves();
-        }
-
-
-        Knight(aString name, aString color) : Piece(name, color, KNIGHT, 3)
-        {   
-            add_moves();
-        }
-
-        Knight(aString name, aString color, int color_id) : Piece(name, color, KNIGHT, 3, color_id)
-        {
-            add_moves();
-        }
-
-
-        inline void add_moves()
+        inline void add_moves() override
         {
             // we add all the moves as pointers
             // I use push_back() instead of adding the values in initialisation to support older C++ versions.
@@ -274,12 +263,40 @@ class Knight : public virtual Piece
             this->attacking_moves.push_back( std::make_unique< helper::coordinates<int64_t> >(-2, 1) );
             return;
         }
+
+    public:
+        Knight() : Piece()
+        {
+            this->id = KNIGHT;
+            this->value = 3;
+
+            add_moves();
+        }
+
+
+        Knight(aString name0, aString color0) : Piece(name0, color0, KNIGHT, 3)
+        {   
+            add_moves();
+        }
+
+        Knight(aString name0, aString color0, int color_id0) : Piece(name0, color0, KNIGHT, 3, color_id0)
+        {
+            add_moves();
+        }
+
+
 };
 
 
 // for Queen, we inherit both Rook and Bishop to get both of their add_pieces() methods.
 class Queen : public Rook, public Bishop
 {
+    protected:
+        inline void add_moves() override
+        {
+            Rook::add_moves();
+            Bishop::add_moves();
+        }
     public:
         Queen()
         {
@@ -288,36 +305,32 @@ class Queen : public Rook, public Bishop
             this->id = QUEEN;
             this->value = 8;
 
-
-            Rook::add_moves();
-            Bishop::add_moves();
+            this->add_moves();
         }
 
-        Queen(aString name, aString color)
+        Queen(aString name0, aString color0)
         {
-            this->name = name;
-            this->color = color;
+            this->name = name0;
+            this->color = color0;
             this->id = QUEEN;
             this->value = 8;
 
 
-            Rook::add_moves();
-            Bishop::add_moves();
+            this->add_moves();
         }
 
-        Queen(aString name, aString color, int color_id)
+        Queen(aString name0, aString color0, int color_id0)
         {
-            this->name = name;
-            this->color = color;
+            this->name = name0;
+            this->color = color0;
             this->id = QUEEN;
             this->value = 8;
-            this->color_id = color_id;
+            this->color_id = color_id0;
 
-            this->id = this->id*(pow(10, color_id));
+            this->id = this->id*(pow(10, color_id0));
 
 
-            Rook::add_moves();
-            Bishop::add_moves();
+            this->add_moves();
         }
 
 
@@ -338,22 +351,22 @@ class King : public virtual Piece
             add_moves();
         }
 
-        King(aString name, aString color) : Piece(name, color, KING, 8)
+        King(aString name0, aString color0) : Piece(name0, color0, KING, 8)
         {
             add_moves();
         }
 
 
-        King(aString name, aString color, int color_id) : Piece(name, color, KING, 8, color_id)
+        King(aString name0, aString color0, int color_id0) : Piece(name0, color0, KING, 8, color_id0)
         {
             add_moves();
         }
 
 
-        inline void add_moves()
+        inline void add_moves() override
         {
-            for (int i = -1; i < 2; i++) {
-                for ( int j=-1; j < 2; j++){
+            for (int64_t i = -1; i < 2; i++) {
+                for ( int64_t j = -1; j < 2; j++){
                     if ( i == 0  && j == 0 ) { continue; }
 
                     this->moves.push_back( std::make_unique< helper::coordinates<int64_t> >(i, j) );

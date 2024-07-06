@@ -1,5 +1,5 @@
 #include "backend/helper_tools.hpp"
-#include <stdint.h>
+#include <cstdint>
 #include <memory>
 #include <vector>
 #include <unordered_map>
@@ -11,10 +11,10 @@
 
 inline void render_backround()
 {
-    unsigned int* pixel = (unsigned int*)render_state.memory;
+    unsigned int* pixel = static_cast<unsigned int*>(render_state.memory);
     for ( int y = 0; y < render_state.height; y++ ) {
         for ( int x = 0; x < render_state.width; x++ ) {
-            *pixel++ = x*y;
+            *pixel++ = static_cast<unsigned int>(x*y);
         }
     }
 }
@@ -126,6 +126,8 @@ inline void draw_chessboard(int width, int height)
                 case 1:
                     draw_rect(first_x, first_y, square_width, square_height, 0x000000);
                     break;
+                default:
+                    break;
             }
 
             /*
@@ -219,7 +221,7 @@ inline void render_image(const HANDLE image, const int32_t& x, const int32_t& y,
     if ( image == NULL ) return;
 
     BITMAP bm; // a buffer containing the information of our image
-    GetObject(image, sizeof(bm), (LPVOID)&bm);//get bitmap dimension
+    GetObject(image, sizeof(bm), static_cast<LPVOID>(&bm));//get bitmap dimension
 
 
 
@@ -238,7 +240,7 @@ inline void render_image(const HANDLE image, const int32_t& x, const int32_t& y,
     // some rows have an additional pixel.
     int64_t remainder_of_row = bytes_per_scan_line % image_width; 
 
-    std::vector<uint32_t> bytes(image_width * image_height);
+    std::vector<uint32_t> bytes(static_cast<size_t>(image_width * image_height));
 
     uint32_t count = 0;
 
@@ -249,7 +251,7 @@ inline void render_image(const HANDLE image, const int32_t& x, const int32_t& y,
 
 
     // we use nested loops for easier debugging
-    for ( int64_t y = 0; y < image_height; y++ ) {
+    for ( int64_t y0 = 0; y0 < image_height; y0++ ) {
         for ( int64_t y1 = 0; y1 < image_width; y1++ ) {
             
 
@@ -306,8 +308,8 @@ inline void render_image(const HANDLE image, const int32_t& x, const int32_t& y,
 
 struct rendered_picture
 {
-    uint32_t width = 0;
-    uint32_t height = 0;
+    int64_t width = 0;
+    int64_t height = 0;
 
     std::vector<uint32_t> begin;
 };
@@ -320,7 +322,7 @@ inline rendered_picture render_image(HANDLE image, bool invert = false)
     if ( image == NULL ) return picture;
 
     BITMAP bm; // a buffer containing the information of our image
-    GetObject(image, sizeof(bm), (LPVOID)&bm);//get bitmap dimension
+    GetObject(image, sizeof(bm), static_cast<LPVOID>(&bm));//get bitmap dimension
     
 
 
@@ -344,7 +346,7 @@ inline rendered_picture render_image(HANDLE image, bool invert = false)
 
     //uint32_t bytes[(image_width * image_height)] = {0};
 
-    std::vector<uint32_t> bytes(image_width * image_height);
+    std::vector<uint32_t> bytes(static_cast<size_t>(image_width * image_height));
 
     uint32_t count = 0;
 
@@ -464,17 +466,17 @@ inline void draw_pieces(const std::weak_ptr<Board> board_ptr)
 {
     std::weak_ptr<Square> a_square = std::weak_ptr<Square>();
 
-    int x1 = 0;
-    int y1 = 0;
+    int32_t x1 = 0;
+    int32_t y1 = 0;
     //HANDLE* hImg_ptr = NULL;
     rendered_picture picture;
 
 
     if ( board_ptr.expired() ) return;
 
-    for ( int x = 0; x < 8; x++ ) {
+    for ( int32_t x = 0; x < 8; x++ ) {
         x1 = x*(render_state.width/8);
-        for ( int y = 0; y < 8; y++ ) {
+        for ( int32_t y = 0; y < 8; y++ ) {
 
             y1 = y*(render_state.height/8);
 
@@ -584,8 +586,8 @@ inline void drawPossibleMoves( const std::vector< helper::coordinates<int64_t> >
     // base values
     helper::coordinates<int64_t> aux = current;
 
-    uint32_t square_width = screen_width/8;
-    uint32_t square_height = screen_height/8;
+    int32_t square_width = screen_width/8;
+    int32_t square_height = screen_height/8;
 
     std::vector<helper::coordinates<int64_t>> directions_cannot_go;
 
@@ -614,8 +616,8 @@ inline void drawPossibleMoves1( const std::vector< helper::coordinates<int64_t> 
 
     helper::coordinates<int64_t> aux = current;
 
-    uint32_t square_width = screen_width/8;
-    uint32_t square_height = screen_height/8;
+    int32_t square_width = screen_width/8;
+    int32_t square_height = screen_height/8;
 
     std::vector<helper::coordinates<int64_t>> directions_cannot_go;
 
@@ -640,8 +642,8 @@ inline void drawPossibleMoves2( const std::vector< coordinate_ptr >& moves, cons
 
     helper::coordinates<int64_t> aux = current;
 
-    uint32_t square_width = screen_width/8;
-    uint32_t square_height = screen_height/8;
+    int square_width = screen_width/8;
+    int square_height = screen_height/8;
 
     std::vector<helper::coordinates<int64_t>> directions_cannot_go;
 

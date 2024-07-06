@@ -2,7 +2,7 @@
 #define RENDER_TEXT
 
 #include "backend/helper_tools.hpp"
-#include <stdint.h>
+#include <cstdint>
 #include <tchar.h>
 #include <memory>
 #include <string>
@@ -34,12 +34,18 @@ inline void display_text(std::string text, const int32_t& x, const int32_t& y, H
 }
 
 
-inline void display_all_text(const int32_t& x, const int32_t& y, HWND hwnd)
+inline void display_all_text(const int32_t& x, const int32_t& y, HWND hwnd, std::shared_ptr< std::deque<std::string> > text)
 {   
-    // we delete old texts
-    if ( text_field.text.size() > 40 ) { text_field.text.pop_front(); }
 
-    std::string all_text = std::reduce(text_field.text.begin(), text_field.text.end(), std::string(""));
+    
+    std::string all_text;
+
+    if ( !text ) all_text = "";
+
+    else {
+        all_text = std::reduce(text->begin(), text->end(), std::string(""));
+    }
+    
 
 
     display_text(all_text, render_state.width + 20, 0, hwnd);
