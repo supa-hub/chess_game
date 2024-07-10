@@ -47,7 +47,7 @@ class Board
         bool finished = false;
 
 
-        std::unordered_set<int32_t> already_used; // well use this for when we shuffle around pieces (it's a special gamemode)
+        std::unordered_set<uint32_t> already_used; // well use this for when we shuffle around pieces (it's a special gamemode)
 
         // we will create a 8x8 board into this container ( NOTE: you can specify a custom board size, but the pieces will be in the 1 to 8 squares )
         std::vector< std::vector< std::shared_ptr<Square> >> all_squares;
@@ -323,12 +323,12 @@ class Board
 
         std::weak_ptr<Square> get_square( helper::coordinates<int64_t> location )
         {
-            return all_squares[location.x][location.y];
+            return all_squares[static_cast<size_t>( location.x )][static_cast<size_t>( location.y )];
         }
 
-        std::weak_ptr<Square> get_square( const int64_t& x, const int64_t& y )
+        std::weak_ptr<Square> get_square( int64_t x, int64_t y )
         {
-            return all_squares[x][y];
+            return all_squares[static_cast<size_t>( x )][static_cast<size_t>( y )];
         }
         
         // converts window helper::coordinates<int64_t> into a squares helper::coordinates<int64_t>, these helper::coordinates<int64_t> can then be used
@@ -384,17 +384,6 @@ class Board
             update_check();
             update_checkmate();
             
-
-            //update_check();
-
-            /*
-            if ( is_checkmate() != "" ) {
-                std::cout << "the opposing king is checkmated" << "\n"; 
-                std::cout << "the color " << is_checkmate() << " won." << "\n"; 
-            }
-            */
-
-            //update_checkmate();
 
 
             if ( ++this->player_turn == amount_of_players ) {
@@ -533,8 +522,8 @@ class Board
 
             
             const std::vector< coordinate_ptr >& moves = a_piece->possible_moves();
-            uint16_t piece_id = a_piece->tell_id(); 
-            std::string_view color{ a_piece->tell_color() };
+            uint32_t piece_id = a_piece->tell_id(); 
+            std::string color = a_piece->tell_color();
             uint16_t color_id = a_piece->tell_color_id();
 
 
@@ -644,7 +633,7 @@ class Board
         {
             helper::coordinates<int64_t> aux0 = current;
             helper::coordinates<int64_t> aux;
-            std::string_view color{ a_piece->tell_color() };
+            std::string color = a_piece->tell_color();
             uint16_t color_id = a_piece->tell_color_id();
 
             std::shared_ptr<Square> a_square;
@@ -684,7 +673,7 @@ class Board
             for ( helper::coordinates<int64_t>& attack : attacking_moves) {
                 aux = aux0 + attack;
 
-                attacked_square = get_square( helper::clamp<int>(aux.x, 0, 7), helper::clamp<int>(aux.y, 0, 7) ).lock();
+                attacked_square = get_square( helper::clamp<int64_t>(aux.x, 0, 7), helper::clamp<int64_t>(aux.y, 0, 7) ).lock();
 
                 if ( attacked_square->has_piece() ) {
                     if ( color != attacked_square->get_piece().lock()->tell_color()) {
@@ -1010,7 +999,7 @@ inline std::vector< helper::coordinates<T> > Board::king_castling( helper::coord
         return std::vector< coordinates<int64_t> >{};
     }
 
-    uint16_t piece_id = a_piece->tell_id(); 
+    uint32_t piece_id = a_piece->tell_id(); 
     std::string_view color{ a_piece->tell_color() };
     uint16_t color_id = a_piece->tell_color_id();
 

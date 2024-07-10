@@ -525,14 +525,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
                     
                 } break;
                 
-                /*
-                commented this part out and added the functions outside the
-                switch statement because I noticed that I need to call these functions every time, not just
-                when the switch cases don't happen.
-                default: {
-                    TranslateMessage(&message);
-                    DispatchMessage(&message);
-                }*/
 
                 default:
                     break;

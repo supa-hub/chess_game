@@ -26,7 +26,7 @@ class Piece
         // base values
         aString name;
         aString color;
-        uint16_t id = 0;
+        uint32_t id = 0;
         uint16_t value = 0;
         uint16_t color_id = 0;
         bool first_move = true; // this will help us check if its the first pawn move or rook move, 
@@ -49,7 +49,7 @@ class Piece
         aString tell_name() { return this->name; }
         aString tell_color() { return this->color; }
         uint16_t tell_color_id() { return this->color_id; }
-        uint16_t tell_id() { return this->id; }
+        uint32_t tell_id() { return this->id; }
         uint16_t tell_value() { return this->value; }
         bool has_moved() { return !this->first_move; }
 
@@ -62,11 +62,11 @@ class Piece
         // We construct a standard piece and give it its standard values.
         Piece(aString name0, aString color0) : name(name0), color(color0) { }
 
-        Piece(aString name0, aString color0, int color_id0) : name(name0), color(color0), color_id(color_id0) { }
+        Piece(aString name0, aString color0, uint16_t color_id0) : name(name0), color(color0), color_id(color_id0) { }
 
-        Piece(aString name0, aString color0, int id0, int value0) : name(name0), color(color0), id(id0), value(value0) { }
+        Piece(aString name0, aString color0, uint32_t id0, uint16_t value0) : name(name0), color(color0), id(id0), value(value0) { }
 
-        Piece(aString name0, aString color0, int id0, int value0, int color_id0) : name(name0), color(color0), id(id0), value(value0), color_id(color_id0) 
+        Piece(aString name0, aString color0, uint32_t id0, uint16_t value0, uint16_t color_id0) : name(name0), color(color0), id(id0), value(value0), color_id(color_id0) 
         { 
             this->id = this->id*(pow(10, color_id0));
         }
@@ -123,16 +123,13 @@ class Pawn : public virtual Piece
             add_moves();
         }
 
-        Pawn(aString name0, aString color0, int color_id0) : Piece(name0, color0, PAWN, 1, color_id0)
+        Pawn(aString name0, aString color0, uint16_t color_id0) : Piece(name0, color0, PAWN, 1, color_id0)
         {
             add_moves();
         }
 
-
-
-
-         
 };
+
 
 
 class Rook : public virtual Piece
@@ -171,7 +168,7 @@ class Rook : public virtual Piece
             add_moves();
         }
 
-        Rook(aString name0, aString color0, int color_id0) : Piece(name0, color0, ROOK, 5, color_id0)
+        Rook(aString name0, aString color0, uint16_t color_id0) : Piece(name0, color0, ROOK, 5, color_id0)
         {
             add_moves();
         }
@@ -221,7 +218,7 @@ class Bishop : public virtual Piece
             add_moves();
         }
 
-        Bishop(aString name0, aString color0, int color_id0) : Piece(name0, color0, BISHOP, 3, color_id0)
+        Bishop(aString name0, aString color0, uint16_t color_id0) : Piece(name0, color0, BISHOP, 3, color_id0)
         {
             add_moves();
         }
@@ -279,7 +276,7 @@ class Knight : public virtual Piece
             add_moves();
         }
 
-        Knight(aString name0, aString color0, int color_id0) : Piece(name0, color0, KNIGHT, 3, color_id0)
+        Knight(aString name0, aString color0, uint16_t color_id0) : Piece(name0, color0, KNIGHT, 3, color_id0)
         {
             add_moves();
         }
@@ -319,7 +316,7 @@ class Queen : public Rook, public Bishop
             this->add_moves();
         }
 
-        Queen(aString name0, aString color0, int color_id0)
+        Queen(aString name0, aString color0, uint16_t color_id0)
         {
             this->name = name0;
             this->color = color0;
@@ -357,7 +354,7 @@ class King : public virtual Piece
         }
 
 
-        King(aString name0, aString color0, int color_id0) : Piece(name0, color0, KING, 8, color_id0)
+        King(aString name0, aString color0, uint16_t color_id0) : Piece(name0, color0, KING, 8, color_id0)
         {
             add_moves();
         }
